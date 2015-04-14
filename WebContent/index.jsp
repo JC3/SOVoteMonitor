@@ -123,7 +123,7 @@ function setup () {
 	<table id="live" cellspacing="0">
 	<thead><tr><th>Rank</th><th>User</th><th class="votehead">Votes</th><th>Next</th><th>Change</th><th>Accum.</tr></thead>
 	<tbody id="votes"></tbody>
-	<tfoot><tr><td/><td/><td/><td/><td><a href="javascript:reset();">Reset</a></td></tr></tfoot>
+	<tfoot><tr><td/><td/><td/><td/><td/><td><a href="javascript:reset();">Reset</a></td></tr></tfoot>
 	</table>
 	<table id="info">
     <tr><td class="key">Last Updated:</td><td class="value" id="last-updated"></td></tr>
