@@ -19,6 +19,8 @@ import javax.servlet.http.HttpServletResponse;
 public class VoteMonitorServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
+	private static final int VERSION = 2;
+	
 	
 	private MonitorContextListener monitor;
 	
@@ -49,11 +51,13 @@ public class VoteMonitorServlet extends HttpServlet {
 	            jsons.append(Integer.toString(ci.userId));
 	            jsons.append("}");
 	        }
-	        jsons.append("]}");
+	        jsons.append("],\"r\":");
+	        jsons.append(VERSION);
+	        jsons.append("}");
 	        json = jsons.toString();
 	    } else {
 	        // request is for vote data; note Arrays.toString() encloses in []'s.
-	        json = String.format("{\"v\":%s}", Arrays.toString(monitor.getVotes()).replace(" ", ""));
+	        json = String.format("{\"v\":%s,\"r\":%d}", Arrays.toString(monitor.getVotes()).replace(" ", ""), VERSION);
 	    }
 	    
 	    response.setContentType("application/json");
