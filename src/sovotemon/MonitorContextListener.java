@@ -174,6 +174,26 @@ public class MonitorContextListener implements ServletContextListener {
         
     }
     
+    
+    /**
+     * Get a copy of current data. 
+     */
+    public List<CandidateInfo> getSnapshot () {
+        
+        List<CandidateInfo> snapshot = new ArrayList<CandidateInfo>();
+        
+        try {
+            candidatesLock.readLock().lock();
+            for (int n = 0; n < candidatesSorted.size(); ++ n)
+                snapshot.add(candidatesSorted.get(n).clone());
+        } finally {
+            candidatesLock.readLock().unlock();
+        }
+        
+        return snapshot;
+
+    }
+    
 
     @Override public void contextInitialized (ServletContextEvent event) {
         

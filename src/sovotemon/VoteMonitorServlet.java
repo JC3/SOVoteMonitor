@@ -23,11 +23,6 @@ public class VoteMonitorServlet extends HttpServlet {
 	
 	
 	private MonitorContextListener monitor;
-	
-	
-    public VoteMonitorServlet() {
-        super();
-    }
 
     
 	@Override public void init(ServletConfig config) throws ServletException {

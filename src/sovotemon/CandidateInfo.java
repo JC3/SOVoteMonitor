@@ -1,7 +1,7 @@
 package sovotemon;
 
 
-public class CandidateInfo implements Comparable<CandidateInfo> {
+public class CandidateInfo implements Comparable<CandidateInfo>, Cloneable {
 
     final String postId;
     final int userId;
@@ -22,6 +22,12 @@ public class CandidateInfo implements Comparable<CandidateInfo> {
     
     @Override public String toString () {
         return String.format("CandidateInfo: %s %s %s", postId, userId, displayName);
+    }
+    
+    @Override public CandidateInfo clone () {
+        CandidateInfo copy = new CandidateInfo(postId, userId, displayName);
+        copy.voteCount = voteCount;
+        return copy;
     }
     
 }
