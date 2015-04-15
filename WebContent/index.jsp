@@ -92,6 +92,7 @@ function build (c) {
 function setup () {
 	$.getJSON("votes?t=c", function (c) {
 		version = c.r;
+		$("#version-number").text(version);
 	    build(c.c);
 	    update();
 	    setInterval(update, 5000);
@@ -115,6 +116,8 @@ function setup () {
 #wrapper { overflow: hidden; }
 .key { white-space: nowrap; font-weight: bold; }
 .value { white-space: nowrap; margin-left: 1ex; text-align: right; }
+#disclaimer { color: red; margin-top: 3ex; }
+#appinfo { color: #909090; margin-top: 0.5ex; font-size: small; }
 </style>
 </head>
 <body onload="setup();">
@@ -125,12 +128,17 @@ function setup () {
 	<tbody id="votes"></tbody>
 	<tfoot><tr><td/><td/><td/><td/><td/><td><a href="javascript:reset();">Reset</a></td></tr></tfoot>
 	</table>
-	<table id="info">
-    <tr><td class="key">Last Updated:</td><td class="value" id="last-updated"></td></tr>
-    <tr><td class="key">Last Reset:</td><td class="value" id="last-reset"></td></tr>
-    <tr><td class="key">Time Since Reset:</td><td class="value" id="reset-time"></td></tr>
-    </table>
+	<div id="info">
+		<table>
+	    <tr><td class="key">Last Updated:</td><td class="value" id="last-updated"></td></tr>
+	    <tr><td class="key">Last Reset:</td><td class="value" id="last-reset"></td></tr>
+	    <tr><td class="key">Time Since Reset:</td><td class="value" id="reset-time"></td></tr>
+	    </table>
+	    <div id="disclaimer">Please do not share this link in public (Twitter, SO posts, etc.), my server can only handle so much! Thanks!</div>
+	</div>
 </div>
 <div id="halp">Counts refreshed every 5 seconds. 'Next' column shows gap to next rank up. 'Change' column shows change since last refresh. 'Accum' column shows total change since page load. Press 'Reset' at the bottom of the table to reset the 'Accum' column's start point.</div>
+<hr>
+<div id="appinfo">Author: <a href="http://stackoverflow.com/users/616460">Jason C</a> | Version: <span id="version-number"></span></div>
 </body>
 </html>
