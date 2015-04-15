@@ -116,7 +116,8 @@ function setup () {
 #wrapper { overflow: hidden; }
 .key { white-space: nowrap; font-weight: bold; }
 .value { white-space: nowrap; margin-left: 1ex; text-align: right; }
-#disclaimer { color: red; margin-top: 3ex; }
+#disclaimer { color: red; margin-top: 3ex; border-top: 1px solid #f0f0f0; padding-top: 3ex; }
+#links { margin-top: 3ex; }
 #appinfo { color: #909090; margin-top: 0.5ex; font-size: small; }
 </style>
 </head>
@@ -134,7 +135,19 @@ function setup () {
 	    <tr><td class="key">Last Reset:</td><td class="value" id="last-reset"></td></tr>
 	    <tr><td class="key">Time Since Reset:</td><td class="value" id="reset-time"></td></tr>
 	    </table>
-	    <div id="disclaimer">Please do not share this link outside of SO posts (Twitter, other forums, etc.). Thanks!</div>
+        <div id="disclaimer">Please do not share this link outside of SO posts (Twitter, other forums, etc.). Thanks!</div>
+	    <div id="links">
+	    Useful election links:
+	    <ul>
+        <li><a target="_blank" href="http://meta.stackoverflow.com/questions/290096">Candidate Questionnaire Responses</a></li>
+        <li><a target="_blank" href="http://stackoverflow.com/election/6?tab=nomination&all=true">Candidate Nomination Discussions</a> (scroll down for comments)</li>
+        <li><a target="_blank" href="http://elections.stackexchange.com/#stackoverflow">Candidate Data Summary</a></li>
+        <li><a target="_blank" href="http://meta.stackoverflow.com/questions/289995">Candidate Activity Profiles</a></li>
+        <li><a target="_blank" href="http://stackoverflow.com/election/6">Election Page</a> (vote here)</li>
+        <li><a target="_blank" href="http://meta.stackexchange.com/questions/135360">There's an election going on. What's happening and how does it work?</a></li>
+        <li><a target="_blank" href="http://meta.stackexchange.com/questions/77541">How are moderator election votes counted, in plain English?</a></li>        
+	    </ul>
+	    </div>
 	</div>
 </div>
 <div id="halp">Counts refreshed every 5 seconds. 'Next' column shows gap to next rank up. 'Change' column shows change since last refresh. 'Accum' column shows total change since page load. Press 'Reset' at the bottom of the table to reset the 'Accum' column's start point.</div>
