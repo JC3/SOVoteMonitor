@@ -134,7 +134,7 @@ function setup () {
 	    <tr><td class="key">Last Reset:</td><td class="value" id="last-reset"></td></tr>
 	    <tr><td class="key">Time Since Reset:</td><td class="value" id="reset-time"></td></tr>
 	    </table>
-	    <div id="disclaimer">Please do not share this link in public (Twitter, SO posts, etc.), my server can only handle so much! Thanks!</div>
+	    <div id="disclaimer">Please do not share this link outside of SO posts (Twitter, other forums, etc.). Thanks!</div>
 	</div>
 </div>
 <div id="halp">Counts refreshed every 5 seconds. 'Next' column shows gap to next rank up. 'Change' column shows change since last refresh. 'Accum' column shows total change since page load. Press 'Reset' at the bottom of the table to reset the 'Accum' column's start point.</div>
