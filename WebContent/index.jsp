@@ -1,5 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=ISO-8859-1"
-    pageEncoding="ISO-8859-1"%>
+    pageEncoding="ISO-8859-1" session="false"%>
 <!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
 <html>
 <head>
@@ -7,13 +7,41 @@
 <title>SO 2015 Election Vote Monitor</title>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 <script src="jquery.formatDateTime.min.js"></script>
+<script src="jquery.storageapi.min.js"></script> 
 <script type="text/javascript">
+function setLocal (k, v) {
+	try {
+		$.localStorage.set(k, v);
+	} catch (e) {
+		console.log("setLocal " + k + " failed: " + e);
+	}
+}
+
+function getLocal (k) {
+	try {
+		return $.localStorage.get(k);
+	} catch (e) {
+		console.log("getLocal " + k + " failed: " + e);
+		return null;
+	}
+}
+
+function localSupported () {
+	try {
+		return window.localStorage ? true : false;
+	} catch (e) {
+		console.log("localSupported failed: " + e);
+		return false;
+	}
+}
+
 var previous = null;
-var saved = null;
+var saved = getLocal("saved");
 var version = 0;
-var resetTime = null;
+var resetTime = new Date(getLocal("resetTime"));
 var serial = 0;
 var intervalId = null;
+var ready = false;
 
 function addZero (v) { 
 	return (v<10 ? '0' : '') + v; 
@@ -29,11 +57,13 @@ function updateVoteCounts (v, status) {
 	        $("#update").show();
 	    if (previous == null)
 	        previous = v.v;
-	    if (saved == null) {
+	    if (saved == null || saved.length != v.v.length /* covers case when local storage candidate list is definitely different */) {
 	        saved = v.v;
 	        resetTime = new Date();
-	        $("#last-reset").text($.formatDateTime("yy-mm-dd hh:ii:ss", resetTime));
+	        setLocal("saved", saved);
+	        setLocal("resetTime", resetTime.getTime());
 	    }	
+        $("#last-reset").text($.formatDateTime("yy-mm-dd hh:ii:ss", resetTime));
 	    $.each(v.v, function (index, votes) {
 	        $("#votes-" + index).text(votes);
 	        if (previous != null) {
@@ -100,10 +130,11 @@ function update () {
 
 function reset () {
     saved = null;
+    serial = 0; // super duper hack; force requery on next update so accum column is cleared even if not modified. getting REALLY lazy.
 }
 
-function showDebug () {
-	$(".debug").show();
+function toggleDebug () {
+	$(".debug").toggle();
 }
 
 function build (c) {
@@ -125,15 +156,24 @@ function setup () {
 		$("#version-number").text(version);
 	    build(c.c);
 	    update();
-	    intervalId = setInterval(update, 5000);
-	    $("#interval").val("5000");
+        ready = true;
+        $("#interval").val(getLocal("interval") === null ? "5000" : getLocal("interval"));
+        changeInterval();
 	});
+	$("#local-storage").text(localSupported() ? "Supported" : "Not Supported");
+	$("#refreshnote").toggle(localSupported());
 }
 
 function changeInterval () {
+	if (!ready) {
+		console.log("warning: user was quick on the interval select; ignored, not ready yet");
+		return;
+	}
 	var interval = $("#interval").val();
-	clearInterval(intervalId);
+	if (intervalId !== null)
+	    clearInterval(intervalId);
     intervalId = setInterval(update, interval);
+    setLocal("interval", interval);
 }
 </script>
 <style type="text/css">
@@ -157,6 +197,7 @@ function changeInterval () {
 #disclaimer { color: red; margin-top: 3ex; border-top: 1px solid #f0f0f0; padding-top: 3ex; }
 #links { margin-top: 3ex; }
 #appinfo { color: #909090; margin-top: 0.5ex; font-size: small; }
+#refreshnote { display: none; font-style: italic; margin-top: 2ex; }
 </style>
 </head>
 <body onload="setup();">
@@ -173,34 +214,36 @@ function changeInterval () {
 	    <tr><td class="key">Last Reset:</td><td class="value" id="last-reset"></td></tr>
 	    <tr><td class="key">Time Since Reset:</td><td class="value" id="reset-time"></td></tr>
 	    <tr><td class="key">Update Interval:</td><td class="value">
-	    <select id="interval" onchange="changeInterval();">
-	    <option value="5000">5 seconds</option>
-	    <option value="30000">30 seconds</option>
-	    <option value="300000">5 minutes</option>
-	    <option value="1800000">30 minutes</option>
-	    </select>
+		    <select id="interval" onchange="changeInterval();">
+		    <option value="5000">5 seconds</option>
+		    <option value="30000">30 seconds</option>
+		    <option value="300000">5 minutes</option>
+		    <option value="1800000">30 minutes</option>
+		    </select>
 	    </td></tr>
-        <tr class="debug"><td class="key">Update Status:</td><td class="value" id="debug-status">Waiting...</td></tr>        
-        <tr class="debug"><td class="key">Data Version:</td><td class="value" id="debug-serial">Waiting...</td></tr>        
-        <tr class="debug"><td class="key">Server Version:</td><td class="value" id="debug-version">Waiting...</td></tr>        
+        <tr class="debug"><td class="key">Update Status:</td><td class="value" id="debug-status"></td></tr>        
+        <tr class="debug"><td class="key">Data Version:</td><td class="value" id="debug-serial"></td></tr>        
+        <tr class="debug"><td class="key">Server Version:</td><td class="value" id="debug-version"></td></tr>
+        <tr class="debug"><td class="key">Local Storage:</td><td class="value" id="local-storage"></td></tr>
 	    </table>
+        <div id="refreshnote">The "Accum" column will be saved across page refreshes.</div>
         <div id="disclaimer">Please do not share this link outside of SO posts (Twitter, other forums, etc.). Thanks!</div>
 	    <div id="links">
-	    Useful election links:
-	    <ul>
-        <li><a target="_blank" href="http://meta.stackoverflow.com/questions/290096">Candidate Questionnaire Responses</a></li>
-        <li><a target="_blank" href="http://stackoverflow.com/election/6?tab=nomination&all=true">Candidate Nomination Discussions</a> (scroll down for comments)</li>
-        <li><a target="_blank" href="http://elections.stackexchange.com/#stackoverflow">Candidate Data Summary</a></li>
-        <li><a target="_blank" href="http://meta.stackoverflow.com/questions/289995">Candidate Activity Profiles</a></li>
-        <li><a target="_blank" href="http://stackoverflow.com/election/6">Election Page</a> (vote here)</li>
-        <li><a target="_blank" href="http://meta.stackexchange.com/questions/135360">There's an election going on. What's happening and how does it work?</a></li>
-        <li><a target="_blank" href="http://meta.stackexchange.com/questions/77541">How are moderator election votes counted, in plain English?</a></li>        
-	    </ul>
+		    Useful election links:
+		    <ul>
+	        <li><a target="_blank" href="http://meta.stackoverflow.com/questions/290096">Candidate Questionnaire Responses</a></li>
+	        <li><a target="_blank" href="http://stackoverflow.com/election/6?tab=nomination&all=true">Candidate Nomination Discussions</a> (scroll down for comments)</li>
+	        <li><a target="_blank" href="http://elections.stackexchange.com/#stackoverflow">Candidate Data Summary</a></li>
+	        <li><a target="_blank" href="http://meta.stackoverflow.com/questions/289995">Candidate Activity Profiles</a></li>
+	        <li><a target="_blank" href="http://stackoverflow.com/election/6">Election Page</a> (vote here)</li>
+	        <li><a target="_blank" href="http://meta.stackexchange.com/questions/135360">There's an election going on. What's happening and how does it work?</a></li>
+	        <li><a target="_blank" href="http://meta.stackexchange.com/questions/77541">How are moderator election votes counted, in plain English?</a></li>        
+		    </ul>
 	    </div>
 	</div>
 </div>
-<div id="halp">Counts refreshed every 5 seconds by default; interval can be changed by using dropdown above. 'Next' column shows gap to next rank up. 'Change' column shows change since last refresh. 'Accum' column shows total change since page load. Press 'Reset' at the bottom of the table to reset the 'Accum' column's start point.</div>
+<div id="halp">Counts refreshed every 5 seconds by default; interval can be changed by using dropdown above. 'Next' column shows gap to next rank up. 'Change' column shows change since last refresh. 'Accum' column shows total change since page load. Press 'Reset' at the bottom of the table to reset the 'Accum' column's start point; 'Accum' values saved across page refresh.</div>
 <hr>
-<div id="appinfo">Author: <a href="http://stackoverflow.com/users/616460">Jason C</a> | Version: <span id="version-number"></span> | <a href="javascript:showDebug();">Show Debug Info</a></div>
+<div id="appinfo">Author: <a target="_blank" href="http://stackoverflow.com/users/616460">Jason C</a> | Version: <span id="version-number"></span> | <a href="javascript:toggleDebug();">Show Debug Info</a> | <a target="_blank" href="http://meta.stackoverflow.com/questions/290346">Vote Monitor Meta Page</a></div>
 </body>
 </html>
