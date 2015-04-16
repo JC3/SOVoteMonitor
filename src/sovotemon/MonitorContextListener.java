@@ -34,11 +34,12 @@ public class MonitorContextListener implements ServletContextListener {
     
     private ScheduledExecutorService executor;    
    
-    // these collections not modified after initial creation
+    // the collections are not modified after initial creation
     private final Map<String,CandidateInfo> candidatesByPost = new HashMap<String,CandidateInfo>();
     private final List<CandidateInfo> candidatesSorted = new ArrayList<CandidateInfo>();
-   
-    // lock is for CandidateInfo#voteCount access
+    private volatile int updateSerial = 1; // start at 1; clients use 0 for initial value
+    
+    // lock is for CandidateInfo#voteCount and updateSerial access
     private final ReadWriteLock candidatesLock = new ReentrantReadWriteLock();
 
     
@@ -145,8 +146,15 @@ public class MonitorContextListener implements ServletContextListener {
         // now copy to voteCount while locked
         try {
             candidatesLock.writeLock().lock();
-            for (CandidateInfo ci : candidatesSorted)
-                ci.voteCount = ci.voteCountPending;
+            boolean changed = false;
+            for (CandidateInfo ci : candidatesSorted) {
+                if (ci.voteCount != ci.voteCountPending) {
+                    changed = true;
+                    ci.voteCount = ci.voteCountPending;
+                }
+            }
+            if (changed)
+                ++ updateSerial;
         } finally {
             candidatesLock.writeLock().unlock();
         }
@@ -154,18 +162,30 @@ public class MonitorContextListener implements ServletContextListener {
     }
     
 
+    public static class Votes {
+        final int[] votes;
+        final long serial;
+        Votes (int[] votes, long serial) { this.votes = votes; this.serial = serial; }
+    }
+    
+    
     /**
      * Get last updated vote counts.
-     * @return Array, index corresponds to index in candidatesSorted.
+     * @param updateSerial Serial number to facilitate 304 responses. Pass -1 to guarantee non-null return.
+     * @return Array, index corresponds to index in candidatesSorted, or null if currentSerial same as updateSerial.
      */
-    public int[] getVotes () {
+    public Votes getVotes (int currentSerial) {
 
-        int[] votes = new int[candidatesSorted.size()];
+        Votes votes = null;
         
         try {
             candidatesLock.readLock().lock();
-            for (int n = 0; n < candidatesSorted.size(); ++ n)
-                votes[n] = candidatesSorted.get(n).voteCount;
+            if (currentSerial != updateSerial) {
+                int[] values = new int[candidatesSorted.size()];
+                for (int n = 0; n < candidatesSorted.size(); ++ n)
+                    values[n] = candidatesSorted.get(n).voteCount;
+                votes = new Votes(values, updateSerial);
+            }
         } finally {
             candidatesLock.readLock().unlock();
         }

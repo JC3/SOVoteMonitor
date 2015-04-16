@@ -2,6 +2,7 @@ package sovotemon;
 
 import java.io.IOException;
 import java.util.Arrays;
+import java.util.Enumeration;
 
 import javax.servlet.ServletConfig;
 import javax.servlet.ServletException;
@@ -19,7 +20,7 @@ import javax.servlet.http.HttpServletResponse;
 public class VoteMonitorServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	private static final int VERSION = 6; // if incremented, existing users will see a popup telling them to refresh.
+	private static final int VERSION = 7; // if incremented, existing users will see a popup telling them to refresh.
 	
 	
 	private MonitorContextListener monitor;
@@ -32,8 +33,9 @@ public class VoteMonitorServlet extends HttpServlet {
 	
 	@Override protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	    
-	    String json;
+	    String json = null;
 	    
+	    // after this if block, if json == null this signifies data not modified
 	    if ("c".equals(request.getParameter("t"))) {
 	        // request is for candidate info
 	        StringBuilder jsons = new StringBuilder("{\"c\":[");
@@ -51,12 +53,24 @@ public class VoteMonitorServlet extends HttpServlet {
 	        jsons.append("}");
 	        json = jsons.toString();
 	    } else {
-	        // request is for vote data; note Arrays.toString() encloses in []'s.
-	        json = String.format("{\"v\":%s,\"r\":%d}", Arrays.toString(monitor.getVotes()).replace(" ", ""), VERSION);
+	        // request is for vote data 
+	        String sstr = request.getParameter("s");
+	        int clientSerial = 0;
+	        if (sstr != null)
+	            try { clientSerial = Integer.parseInt(sstr); } catch (NumberFormatException x) { /* ignore */ }
+	        MonitorContextListener.Votes votes = monitor.getVotes(clientSerial);
+	        if (votes != null) {
+	            // note Arrays.toString() encloses in []'s.
+	            json = String.format("{\"v\":%s,\"r\":%d,\"s\":%d}", Arrays.toString(votes.votes).replace(" ", ""), VERSION, votes.serial);
+	        }
 	    }
-	    
-	    response.setContentType("application/json");
-        response.getOutputStream().write(json.getBytes("us-ascii"));
+
+	    if (json != null) {
+    	    response.setContentType("application/json");
+            response.getOutputStream().write(json.getBytes("us-ascii"));
+	    } else {
+	        response.sendError(HttpServletResponse.SC_NOT_MODIFIED);
+	    }
         
 	}
 

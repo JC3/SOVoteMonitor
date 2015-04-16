@@ -12,68 +12,98 @@ var previous = null;
 var saved = null;
 var version = 0;
 var resetTime = null;
+var serial = 0;
+var intervalId = null;
 
 function addZero (v) { 
 	return (v<10 ? '0' : '') + v; 
 }
 
-function update () {
-	$.getJSON("votes", function (v) {
-		if (v.r != version)
-			$("#update").show();
-		if (previous == null)
-			previous = v.v;
-		if (saved == null) {
-			saved = v.v;
-		    resetTime = new Date();
-		    $("#last-reset").text($.formatDateTime("yy-mm-dd hh:ii:ss", resetTime));
+function updateVoteCounts (v, status) {
+	$("#debug-status").text(status);
+	if (status == "success") {
+	    $("#debug-serial").text(v.s);
+	    $("#debug-version").text(v.r);
+	    serial = v.s;
+	    if (v.r != version)
+	        $("#update").show();
+	    if (previous == null)
+	        previous = v.v;
+	    if (saved == null) {
+	        saved = v.v;
+	        resetTime = new Date();
+	        $("#last-reset").text($.formatDateTime("yy-mm-dd hh:ii:ss", resetTime));
+	    }	
+	    $.each(v.v, function (index, votes) {
+	        $("#votes-" + index).text(votes);
+	        if (previous != null) {
+	            var delta = votes - previous[index];
+	            $("#change-" + index).text((delta > 0 ? '+' : '') + delta);
+	            $("#change-" + index).removeClass();
+	            $("#change-" + index).addClass((delta > 0 ? 'up' : (delta < 0 ? 'down' : 'zero')));
+	        }
+	        if (saved != null) {
+	            var delta = votes - saved[index];
+	            $("#accum-" + index).text((delta > 0 ? '+' : '') + delta);
+	            $("#accum-" + index).removeClass();
+	            $("#accum-" + index).addClass((delta > 0 ? 'up' : (delta < 0 ? 'down' : 'zero')));
+	        }
+	    });
+	    previous = v.v;
+	    // i copied this from meagar's so chat message
+	    $($('#live > tbody > tr').detach().sort(function(a, b) { return ($(b).find('.votecount').text() | 0) - ($(a).find('.votecount').text() | 0) })).appendTo('#live')
+	    // update ranks oh god i dont know what im doing
+	    var rank = 1;
+	    $(".rank").each(function () {
+	        $(this).text(rank ++);
+	        $(this).parent().removeClass();
+	        if (rank == 12)
+	            $(this).parent().addClass("cutoff");
+	    });
+	    var last = 0;
+	    $(".gap").each(function () {
+	        var curr = $(this).siblings(".votecount").text(); 
+	        $(this).text((last == 0) ? '' : (last - curr));
+	        last = curr;
+	    });
+	} else {
+		// data not modified, but we need to zero out the changed columns
+		for (var n = 0; n < previous.length; ++ n) { // in a reasonably sane universe, previous will have been set already
+            $("#change-" + n).text("0");
+            $("#change-" + n).removeClass();
+            $("#change-" + n).addClass("zero");			
 		}
-		$.each(v.v, function (index, votes) {
-			$("#votes-" + index).text(votes);
-            if (previous != null) {
-                var delta = votes - previous[index];
-                $("#change-" + index).text((delta > 0 ? '+' : '') + delta);
-                $("#change-" + index).removeClass();
-                $("#change-" + index).addClass((delta > 0 ? 'up' : (delta < 0 ? 'down' : 'zero')));
-            }
-            if (saved != null) {
-                var delta = votes - saved[index];
-                $("#accum-" + index).text((delta > 0 ? '+' : '') + delta);
-                $("#accum-" + index).removeClass();
-                $("#accum-" + index).addClass((delta > 0 ? 'up' : (delta < 0 ? 'down' : 'zero')));
-            }
-		});
-		previous = v.v;
-		// i copied this from meagar's so chat message
-        $($('#live > tbody > tr').detach().sort(function(a, b) { return ($(b).find('.votecount').text() | 0) - ($(a).find('.votecount').text() | 0) })).appendTo('#live')
-        // update ranks oh god i dont know what im doing
-        var rank = 1;
-        $(".rank").each(function () {
-        	$(this).text(rank ++);
-        	$(this).parent().removeClass();
-        	if (rank == 12)
-        		$(this).parent().addClass("cutoff");
-        });
-        var last = 0;
-        $(".gap").each(function () {
-        	var curr = $(this).siblings(".votecount").text(); 
-            $(this).text((last == 0) ? '' : (last - curr));
-        	last = curr;
-        });
-        // time
-        var now = new Date();
-        $("#last-updated").text($.formatDateTime("yy-mm-dd hh:ii:ss", now));
-        // reset time difference
-        var diff = Math.floor((now.getTime() - resetTime.getTime()) / 1000);
-        var ds = diff % 60; diff = Math.floor(diff / 60);
-        var dm = diff % 60; diff = Math.floor(diff / 60);
-        var dh = diff;
-        $("#reset-time").text(dh + ":" + addZero(dm) + ":" + addZero(ds));
-	});
+	}
+    // time
+    var now = new Date();
+    $("#last-updated").text($.formatDateTime("yy-mm-dd hh:ii:ss", now));
+    // reset time difference
+    var diff = Math.floor((now.getTime() - resetTime.getTime()) / 1000);
+    var ds = diff % 60; diff = Math.floor(diff / 60);
+    var dm = diff % 60; diff = Math.floor(diff / 60);
+    var dh = diff;
+    $("#reset-time").text(dh + ":" + addZero(dm) + ":" + addZero(ds));
+    // update status
+    $("#debug-status").text(status);
+}
+
+function update () {
+	//$.getJSON("votes", function (v) {
+    // no more shorthand, need more options for supporting 304's -- or maybe we don't, but whatever. i'm confused. [15-apr-2015]
+    $.ajax({
+    	dataType: "json",
+    	url: "votes",
+    	data: { "s": serial },
+    	success: updateVoteCounts
+    });
 }
 
 function reset () {
     saved = null;
+}
+
+function showDebug () {
+	$(".debug").show();
 }
 
 function build (c) {
@@ -95,8 +125,15 @@ function setup () {
 		$("#version-number").text(version);
 	    build(c.c);
 	    update();
-	    setInterval(update, 5000);
+	    intervalId = setInterval(update, 5000);
+	    $("#interval").val("5000");
 	});
+}
+
+function changeInterval () {
+	var interval = $("#interval").val();
+	clearInterval(intervalId);
+    intervalId = setInterval(update, interval);
 }
 </script>
 <style type="text/css">
@@ -116,6 +153,7 @@ function setup () {
 #wrapper { overflow: hidden; }
 .key { white-space: nowrap; font-weight: bold; }
 .value { white-space: nowrap; margin-left: 1ex; text-align: right; }
+.debug { display: none; color: #0000ff; }
 #disclaimer { color: red; margin-top: 3ex; border-top: 1px solid #f0f0f0; padding-top: 3ex; }
 #links { margin-top: 3ex; }
 #appinfo { color: #909090; margin-top: 0.5ex; font-size: small; }
@@ -131,9 +169,20 @@ function setup () {
 	</table>
 	<div id="info">
 		<table>
-	    <tr><td class="key">Last Updated:</td><td class="value" id="last-updated"></td></tr>
+        <tr><td class="key">Last Updated:</td><td class="value" id="last-updated"></td></tr>
 	    <tr><td class="key">Last Reset:</td><td class="value" id="last-reset"></td></tr>
 	    <tr><td class="key">Time Since Reset:</td><td class="value" id="reset-time"></td></tr>
+	    <tr><td class="key">Update Interval:</td><td class="value">
+	    <select id="interval" onchange="changeInterval();">
+	    <option value="5000">5 seconds</option>
+	    <option value="30000">30 seconds</option>
+	    <option value="300000">5 minutes</option>
+	    <option value="1800000">30 minutes</option>
+	    </select>
+	    </td></tr>
+        <tr class="debug"><td class="key">Update Status:</td><td class="value" id="debug-status">Waiting...</td></tr>        
+        <tr class="debug"><td class="key">Data Version:</td><td class="value" id="debug-serial">Waiting...</td></tr>        
+        <tr class="debug"><td class="key">Server Version:</td><td class="value" id="debug-version">Waiting...</td></tr>        
 	    </table>
         <div id="disclaimer">Please do not share this link outside of SO posts (Twitter, other forums, etc.). Thanks!</div>
 	    <div id="links">
@@ -150,8 +199,8 @@ function setup () {
 	    </div>
 	</div>
 </div>
-<div id="halp">Counts refreshed every 5 seconds. 'Next' column shows gap to next rank up. 'Change' column shows change since last refresh. 'Accum' column shows total change since page load. Press 'Reset' at the bottom of the table to reset the 'Accum' column's start point.</div>
+<div id="halp">Counts refreshed every 5 seconds by default; interval can be changed by using dropdown above. 'Next' column shows gap to next rank up. 'Change' column shows change since last refresh. 'Accum' column shows total change since page load. Press 'Reset' at the bottom of the table to reset the 'Accum' column's start point.</div>
 <hr>
-<div id="appinfo">Author: <a href="http://stackoverflow.com/users/616460">Jason C</a> | Version: <span id="version-number"></span></div>
+<div id="appinfo">Author: <a href="http://stackoverflow.com/users/616460">Jason C</a> | Version: <span id="version-number"></span> | <a href="javascript:showDebug();">Show Debug Info</a></div>
 </body>
 </html>
