@@ -3,6 +3,8 @@
 String stylename;
 if ("so".equals(request.getParameter("style")))
     stylename = "so";
+else if ("astro".equals(request.getParameter("style")))
+    stylename = "astro";
 else
     stylename = "plain";
 %>
@@ -49,6 +51,7 @@ var resetTime = new Date(getLocal("resetTime"));
 var serial = 0;
 var intervalId = null;
 var ready = false;
+var enddate = null;
 
 function addZero (v) { 
 	return (v<10 ? '0' : '') + v; 
@@ -135,6 +138,21 @@ function update () {
     });
 }
 
+function updateCountdown () {
+	if (enddate !== null) {
+	    var diff = Math.floor((enddate - new Date().getTime()) / 1000);
+	    if (diff < 0) {
+	    	$("#time-left").text("Primaries ended! Congrats to all!");
+	    } else {
+		    var ds = diff % 60; diff = Math.floor(diff / 60);
+		    var dm = diff % 60; diff = Math.floor(diff / 60);
+		    var dh = diff % 24; diff = Math.floor(diff / 24);
+		    var dd = diff;
+		    $("#time-left").text(dd + ":" + addZero(dh) + ":" + addZero(dm) + ":" + addZero(ds));
+	    }
+	}
+}
+	
 function reset () {
     saved = null;
     serial = 0; // super duper hack; force requery on next update so accum column is cleared even if not modified. getting REALLY lazy.
@@ -160,6 +178,7 @@ function build (c) {
 
 function setup () {
 	$.getJSON("votes?t=c", function (c) {
+		enddate = new Date(c.e);
 		version = c.r;
 		$("#version-number").text(version);
 	    build(c.c);
@@ -167,6 +186,7 @@ function setup () {
         ready = true;
         $("#interval").val(getLocal("interval") === null ? "5000" : getLocal("interval"));
         changeInterval();
+        setInterval(updateCountdown, 1000);
 	});
 	$("#local-storage").text(localSupported() ? "Supported" : "Not Supported");
 	$("#refreshnote").toggle(localSupported());
@@ -187,7 +207,6 @@ function changeInterval () {
 </head>
 <body onload="setup();">
 <div id="update">An update has been made! Please refresh the page!</div>
-<div id="content">
 <div id="wrapper">
 	<table id="live" cellspacing="0">
 	<thead><tr><th>Rank</th><th>User</th><th class="votehead">Votes</th><th>Next</th><th>Change</th><th class="divider"/><th>Accum.</tr></thead>
@@ -196,6 +215,7 @@ function changeInterval () {
 	</table>
 	<div id="info">
 		<table>
+		<tr><td class="key">Election Countdown:</td><td class="value" id="time-left"></td></tr>
         <tr><td class="key">Last Updated:</td><td class="value" id="last-updated"></td></tr>
 	    <tr><td class="key">Last Reset:</td><td class="value" id="last-reset"></td></tr>
 	    <tr><td class="key">Time Since Reset:</td><td class="value" id="reset-time"></td></tr>
@@ -225,12 +245,12 @@ function changeInterval () {
 	        <li><a target="_blank" href="http://meta.stackexchange.com/questions/135360">There's an election going on. What's happening and how does it work?</a></li>
 	        <li><a target="_blank" href="http://meta.stackexchange.com/questions/77541">How are moderator election votes counted, in plain English?</a></li>        
 		    </ul>
+		    Themes: <a href="?style=plain">Default</a> | <a href="?style=so">SO</a> | <a href="?style=astro">Astro</a>
 	    </div>
 	</div>
 </div>
 <div id="halp">Counts refreshed every 5 seconds by default; interval can be changed by using dropdown above. 'Next' column shows gap to next rank up. 'Change' column shows change since last refresh. 'Accum' column shows total change since page load. Press 'Reset' at the bottom of the table to reset the 'Accum' column's start point; 'Accum' values saved across page refresh.</div>
 <hr>
 <div id="appinfo">Author: <a target="_blank" href="http://stackoverflow.com/users/616460">Jason C</a> | Version: <span id="version-number"></span> | <a href="javascript:toggleDebug();">Show Debug Info</a> | <a target="_blank" href="http://meta.stackoverflow.com/questions/290346">Vote Monitor Meta Page</a></div>
-</div>
 </body>
 </html>

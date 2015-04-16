@@ -1,4 +1,4 @@
-body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #444; }
+body { font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: white; background: black; }
 select { font-family: Arial, Helvetica, sans-serif; font-size: 13px; color: #444; }
 hr { border: 0; border-bottom: 1px solid #c0c0c0; }
 a { color: #E08608; }
@@ -11,9 +11,9 @@ a:hover { color: #FFA500; }
 #live td.votecount { padding-right: 1ex; }
 #live td.gap { color: #909090; font-size: 11px; }
 #live tr.cutoff td { border-top: 2px solid red; }
-#live td.up { background: #a0ffa0; }
-#live td.zero { background: #f0f0f0; }
-#live td.down { background: #ffa0a0; }
+#live td.up { background: teal; }
+#live td.zero { background: black; }
+#live td.down { background: pink; }
 #halp { margin-top: 2ex; font-weight: bold; }
 #update { display: none; font-weight: bold; background: red; color: white; width: 100%; font-size: larger; text-align: center; margin-bottom: 1ex; }
 #live { float: left; }

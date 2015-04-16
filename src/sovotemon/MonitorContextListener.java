@@ -1,8 +1,10 @@
 package sovotemon;
 
 import java.net.URL;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,6 +21,7 @@ import javax.servlet.ServletContextListener;
 import javax.servlet.annotation.WebListener;
 
 import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 
@@ -34,9 +37,10 @@ public class MonitorContextListener implements ServletContextListener {
     
     private ScheduledExecutorService executor;    
    
-    // the collections are not modified after initial creation
+    // the collections and election date are not modified after initial creation
     private final Map<String,CandidateInfo> candidatesByPost = new HashMap<String,CandidateInfo>();
     private final List<CandidateInfo> candidatesSorted = new ArrayList<CandidateInfo>();
+    private Date primaryEndDate;
     private volatile int updateSerial = 1; // start at 1; clients use 0 for initial value
     
     // lock is for CandidateInfo#voteCount and updateSerial access
@@ -44,13 +48,31 @@ public class MonitorContextListener implements ServletContextListener {
 
     
     /**
-     * Query elections page for candidate info and initialize collections.
+     * Query elections page for candidate and election info and initialize collections.
      */
-    private void updateCandidates () throws Exception {
+    private void queryElectionInfo () throws Exception {
 
         URL url = new URL(ELECTIONS_PAGE);
-        
-        for (Element tr : Jsoup.parse(url, 10000).getElementsByTag("tr")) {
+        Document doc = Jsoup.parse(url, 10000);
+ 
+        // election end date
+        try {
+            for (Element key : doc.getElementsByClass("label-key")) {           
+                if (key.ownText().toLowerCase().contains("election begins")) {
+                    Element value = key.nextElementSibling();
+                    if (value.hasClass("label-value")) {
+                        primaryEndDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ").parse(value.attr("title").replace("Z", "-0000"));
+                        System.out.println("Primaries end: " + primaryEndDate);
+                    }
+                }
+            }
+        } catch (Exception x) {
+            x.printStackTrace();
+            primaryEndDate = null;
+        }
+
+        // candidate info
+        for (Element tr : doc.getElementsByTag("tr")) {
 
             try {
                                 
@@ -220,7 +242,7 @@ public class MonitorContextListener implements ServletContextListener {
         System.out.println("Context initializing...");
         
         try {
-            updateCandidates();
+            queryElectionInfo();
         } catch (Exception x) {
             x.printStackTrace();
         }
@@ -249,6 +271,13 @@ public class MonitorContextListener implements ServletContextListener {
     public CandidateInfo getCandidateInfo (int n) {
         
         return candidatesSorted.get(n);
+        
+    }
+    
+    
+    public Date getPrimaryEndDate () {
+        
+        return primaryEndDate;
         
     }
     

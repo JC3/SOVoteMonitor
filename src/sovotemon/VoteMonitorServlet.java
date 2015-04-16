@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 public class VoteMonitorServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	private static final int VERSION = 8; // if incremented, existing users will see a popup telling them to refresh.
+	private static final int VERSION = 11; // if incremented, existing users will see a popup telling them to refresh.
 	
 	
 	private MonitorContextListener monitor;
@@ -49,6 +49,8 @@ public class VoteMonitorServlet extends HttpServlet {
 	        }
 	        jsons.append("],\"r\":");
 	        jsons.append(VERSION);
+	        jsons.append(",\"e\":");
+	        jsons.append((monitor.getPrimaryEndDate() == null) ? "null" : monitor.getPrimaryEndDate().getTime());
 	        jsons.append("}");
 	        json = jsons.toString();
 	    } else {
