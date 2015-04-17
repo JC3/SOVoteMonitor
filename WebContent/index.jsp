@@ -58,6 +58,7 @@ var serial = 0;
 var intervalId = null;
 var ready = false;
 var enddate = null;
+var electionEnded = false;
 
 function addZero (v) { 
 	return (v<10 ? '0' : '') + v; 
@@ -161,6 +162,12 @@ function updateVoteCounts (v, status) {
     $("#reset-time").text(dh + ":" + addZero(dm) + ":" + addZero(ds));
     // update status
     $("#debug-status").text(status);
+    // stop updating after election ends; do it here so we get at least one update in (todo: improve logic)
+    if (electionEnded) {
+    	console.log("primaries are over; stopping update queries.");
+    	clearInterval(intervalId);
+    	intervalId = null;
+    }    
 }
 
 function update () {
@@ -179,6 +186,7 @@ function updateCountdown () {
 	    var diff = Math.floor((enddate - new Date().getTime()) / 1000);
 	    if (diff < 0) {
 	    	$("#time-left").text("Primaries ended! Congrats to all!");
+	    	electionEnded = true; // next update will be our last
 	    } else {
 		    var ds = diff % 60; diff = Math.floor(diff / 60);
 		    var dm = diff % 60; diff = Math.floor(diff / 60);
@@ -235,10 +243,14 @@ function changeInterval () {
 		console.log("warning: user was quick on the interval select; ignored, not ready yet");
 		return;
 	}
-	var interval = $("#interval").val();
-	if (intervalId !== null)
-	    clearInterval(intervalId);
-    intervalId = setInterval(update, interval);
+    var interval = $("#interval").val();
+	if (electionEnded) {
+		console.log("not changing interval; primaries are over.");
+	} else {
+	    if (intervalId !== null)
+	        clearInterval(intervalId);
+	    intervalId = setInterval(update, interval);
+	}
     setLocal("interval", interval);
 }
 </script>

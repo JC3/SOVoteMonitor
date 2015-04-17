@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 public class VoteMonitorServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	private static final int VERSION = 13; // if incremented, existing users will see a popup telling them to refresh.
+	private static final int VERSION = 14; // if incremented, existing users will see a popup telling them to refresh.
 	
 	
 	private MonitorContextListener monitor;

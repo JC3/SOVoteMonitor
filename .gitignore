@@ -51,3 +51,5 @@ WebContent/META-INF/MANIFEST.MF
 .settings/org.eclipse.wst.common.component
 *.prefs
 *.jsdtscope
+src/sovotemon.rar
+build/classes/sovotemon.rar
