@@ -30,13 +30,14 @@ import org.jsoup.nodes.Element;
 public class QAContextListener implements ServletContextListener {
 
     
-    public static final int VERSION = 1;
+    public static final int VERSION = 2;
     
     
     public static class Question {
         public final int number;
         public final String text;
-        Question (int n, String t) { number = n; text = t; }
+        public final String html;
+        Question (int n, String t, String h) { number = n; html = h; text = t; }
     }
     
     
@@ -157,7 +158,7 @@ public class QAContextListener implements ServletContextListener {
         allNames.add("Paresh Mayani");
         allNames.add("Jeremy Banks");
         allNames.add("Ed Cottrell");
-        allNames.add("Jason C");
+        /*allNames.add("Jason C");
         allNames.add("Undo");
         allNames.add("slugster");
         allNames.add("Qantas 94 Heavy");
@@ -175,7 +176,7 @@ public class QAContextListener implements ServletContextListener {
         allNames.add("AstroCB");
         allNames.add("Unihedro");
         allNames.add("Shree");
-        allNames.add("Hemang");
+        allNames.add("Hemang");*/
         // done with that
         
         Element questionElement = null;
@@ -242,7 +243,7 @@ public class QAContextListener implements ServletContextListener {
                 List<Question> questions = new ArrayList<Question>();
                 int number = 1;
                 for (Element li : ol.getElementsByTag("li")) {
-                    Question q = new Question(number ++, li.text());
+                    Question q = new Question(number ++, li.text(), li.html());
                     questions.add(q);
                 }
                 return questions;
