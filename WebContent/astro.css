@@ -15,14 +15,15 @@ a:hover { color: #FFA500; }
 #live td.zero { background: black; }
 #live td.down { background: pink; }
 #halp { margin-top: 2ex; font-weight: bold; }
-#update { display: none; font-weight: bold; background: red; color: white; width: 100%; font-size: larger; text-align: center; margin-bottom: 1ex; }
+#update { font-weight: bold; background: red; color: white; width: 100%; font-size: larger; text-align: center; margin-bottom: 1ex; }
 #live { float: left; }
 #info { float: left; margin-left: 3ex; margin-top: 3ex; }
 #wrapper { overflow: hidden; }
 .key { white-space: nowrap; font-weight: bold; }
 .value { white-space: nowrap; margin-left: 1ex; text-align: right; }
-.debug { display: none; color: #0000ff; }
+.debug { color: #0000ff; }
 #disclaimer { color: red; margin-top: 3ex; border-top: 1px solid #f0f0f0; padding-top: 3ex; }
 #links { margin-top: 3ex; }
 #appinfo { color: #909090; margin-top: 0.5ex; font-size: 11px; }
-#refreshnote { display: none; font-style: italic; margin-top: 2ex; }
+#refreshnote { font-style: italic; margin-top: 2ex; }
+.withdrawn td { background: #444; color: #888; }

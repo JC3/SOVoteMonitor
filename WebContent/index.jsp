@@ -14,6 +14,12 @@ else
 <meta http-equiv="Content-Type" content="text/html; charset=ISO-8859-1">
 <title>SO 2015 Election Vote Monitor</title>
 <link rel="stylesheet" type="text/css" href="<%= stylename %>.css"/>
+<style type="text/css">
+#reset-pending { display: none; }
+#refreshnote { display: none; }
+#update { display: none; }
+.debug { display: none; }
+</style>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 <script src="jquery.formatDateTime.min.js"></script>
 <script src="jquery.storageapi.min.js"></script> 
@@ -72,21 +78,43 @@ function updateVoteCounts (v, status) {
 	        resetTime = new Date();
 	        setLocal("saved", saved);
 	        setLocal("resetTime", resetTime.getTime());
+	        $("#reset-link").show();
+	        $("#reset-pending").hide();
 	    }	
         $("#last-reset").text($.formatDateTime("yy-mm-dd hh:ii:ss", resetTime));
+        // withdraw status
+        var withdrawn = new Array();
+        for (var n = 0; n < v.v.length; ++ n)
+        	withdrawn[n] = false;
+        if (v.w != null) {
+            $(".entry").removeClass("withdrawn");
+            $.each(v.w, function (index, id) {
+                withdrawn[id] = true;
+                $("#entry-" + id).addClass("withdrawn");
+            });
+        }   
+        // vote counts
 	    $.each(v.v, function (index, votes) {
 	        $("#votes-" + index).text(votes);
 	        if (previous != null) {
 	            var delta = votes - previous[index];
-	            $("#change-" + index).text((delta > 0 ? '+' : '') + delta);
-	            $("#change-" + index).removeClass();
-	            $("#change-" + index).addClass((delta > 0 ? 'up' : (delta < 0 ? 'down' : 'zero')));
+                $("#change-" + index).removeClass();
+                if (!withdrawn[index]) {
+	                $("#change-" + index).text((delta > 0 ? '+' : '') + delta);
+	                $("#change-" + index).addClass((delta > 0 ? 'up' : (delta < 0 ? 'down' : 'zero')));
+                } else {
+                    $("#change-" + index).text("-");                	
+                }
 	        }
 	        if (saved != null) {
-	            var delta = votes - saved[index];
-	            $("#accum-" + index).text((delta > 0 ? '+' : '') + delta);
-	            $("#accum-" + index).removeClass();
-	            $("#accum-" + index).addClass((delta > 0 ? 'up' : (delta < 0 ? 'down' : 'zero')));
+                $("#accum-" + index).removeClass();
+                if (!withdrawn[index]) {
+                    var delta = votes - saved[index];
+  	                $("#accum-" + index).text((delta > 0 ? '+' : '') + delta);
+	                $("#accum-" + index).addClass((delta > 0 ? 'up' : (delta < 0 ? 'down' : 'zero')));
+                } else {
+                	$("#accum-" + index).text("-");
+                }
 	        }
 	    });
 	    previous = v.v;
@@ -95,16 +123,24 @@ function updateVoteCounts (v, status) {
 	    // update ranks oh god i dont know what im doing
 	    var rank = 1;
 	    $(".rank").each(function () {
-	        $(this).text(rank ++);
-	        $(this).parent().removeClass();
-	        if (rank == 12)
-	            $(this).parent().addClass("cutoff");
+	    	if ($(this).parent().hasClass("withdrawn")) {
+	    		$(this).text("out");
+	    	} else {
+		        $(this).text(rank ++);
+		        $(this).parent().removeClass("cutoff");
+		        if (rank == 12)
+		            $(this).parent().addClass("cutoff");
+	    	}
 	    });
 	    var last = 0;
 	    $(".gap").each(function () {
-	        var curr = $(this).siblings(".votecount").text(); 
-	        $(this).text((last == 0) ? '' : (last - curr));
-	        last = curr;
+	    	if ($(this).parent().hasClass("withdrawn")) {
+	    		$(this).text("");
+	    	} else {
+	            var curr = $(this).siblings(".votecount").text(); 
+	            $(this).text((last == 0) ? '' : (last - curr));
+	            last = curr;
+	    	}
 	    });
 	} else {
 		// data not modified, but we need to zero out the changed columns
@@ -155,7 +191,9 @@ function updateCountdown () {
 	
 function reset () {
     saved = null;
-    serial = 0; // super duper hack; force requery on next update so accum column is cleared even if not modified. getting REALLY lazy.
+    serial = 0; // super duper hack; force requery on next update so accum column is cleared (and reset button reshown) even if not modified. getting REALLY lazy.
+    $("#reset-link").hide();
+    $("#reset-pending").show();
 }
 
 function toggleDebug () {
@@ -164,7 +202,7 @@ function toggleDebug () {
 
 function build (c) {
 	$.each(c, function (index, user) {
-	    $("#votes").append('<tr>' +
+	    $("#votes").append('<tr class="entry" id="entry-' + index + '">' +
 	    	               '<td class="rank"></td>' +
 	    		           '<td><a href="http://stackoverflow.com/users/' + user.i + '">' + user.n +'</a></td>' +
 	    	               '<td class="votecount" id="votes-' + index + '">...</td>' +
@@ -211,7 +249,7 @@ function changeInterval () {
 	<table id="live" cellspacing="0">
 	<thead><tr><th>Rank</th><th>User</th><th class="votehead">Votes</th><th>Next</th><th>Change</th><th class="divider"/><th>Accum.</tr></thead>
 	<tbody id="votes"></tbody>
-	<tfoot><tr><td/><td/><td/><td/><td/><td class="divider"/><td class="actioncell"><a href="javascript:reset();">Reset</a></td></tr></tfoot>
+	<tfoot><tr><td/><td/><td/><td/><td/><td class="divider"/><td class="actioncell"><span id="reset-link"><a href="javascript:reset();">Reset</a></span><span id="reset-pending">Wait...</span></td></tr></tfoot>
 	</table>
 	<div id="info">
 		<table>
@@ -228,7 +266,7 @@ function changeInterval () {
 		    </select>
 	    </td></tr>
         <tr class="debug"><td class="key">Update Status:</td><td class="value" id="debug-status"></td></tr>        
-        <tr class="debug"><td class="key">Data Version:</td><td class="value" id="debug-serial"></td></tr>        
+        <tr class="debug"><td class="key">Data Serial:</td><td class="value" id="debug-serial"></td></tr>        
         <tr class="debug"><td class="key">Server Version:</td><td class="value" id="debug-version"></td></tr>
         <tr class="debug"><td class="key">Local Storage:</td><td class="value" id="local-storage"></td></tr>
 	    </table>
@@ -237,20 +275,20 @@ function changeInterval () {
 	    <div id="links">
 		    Useful election links:
 		    <ul>
-	        <li><a target="_blank" href="http://meta.stackoverflow.com/questions/290096">Candidate Questionnaire Responses</a></li>
-	        <li><a target="_blank" href="http://stackoverflow.com/election/6?tab=nomination&all=true">Candidate Nomination Discussions</a> (scroll down for comments)</li>
-	        <li><a target="_blank" href="http://elections.stackexchange.com/#stackoverflow">Candidate Data Summary</a></li>
-	        <li><a target="_blank" href="http://meta.stackoverflow.com/questions/289995">Candidate Activity Profiles</a></li>
-	        <li><a target="_blank" href="http://stackoverflow.com/election/6">Election Page</a> (vote here)</li>
-	        <li><a target="_blank" href="http://meta.stackexchange.com/questions/135360">There's an election going on. What's happening and how does it work?</a></li>
-	        <li><a target="_blank" href="http://meta.stackexchange.com/questions/77541">How are moderator election votes counted, in plain English?</a></li>        
+	        <li><a  href="http://meta.stackoverflow.com/questions/290096">Candidate Questionnaire Responses</a> (<a  href="qa.jsp">alternate view</a>)</li>
+	        <li><a  href="http://stackoverflow.com/election/6?tab=nomination&all=true">Candidate Nomination Discussions</a> (scroll down for comments)</li>
+	        <li><a  href="http://elections.stackexchange.com/#stackoverflow">Candidate Data Summary</a></li>
+	        <li><a  href="http://meta.stackoverflow.com/questions/289995">Candidate Activity Profiles</a></li>
+	        <li><a  href="http://stackoverflow.com/election/6">Election Page</a> (vote here)</li>
+	        <li><a  href="http://meta.stackexchange.com/questions/135360">There's an election going on. What's happening and how does it work?</a></li>
+	        <li><a  href="http://meta.stackexchange.com/questions/77541">How are moderator election votes counted, in plain English?</a></li>        
 		    </ul>
 		    Themes: <a href="?style=plain">Default</a> | <a href="?style=so">SO</a> | <a href="?style=astro">Astro</a>
 	    </div>
 	</div>
 </div>
-<div id="halp">Counts refreshed every 5 seconds by default; interval can be changed by using dropdown above. 'Next' column shows gap to next rank up. 'Change' column shows change since last refresh. 'Accum' column shows total change since page load. Press 'Reset' at the bottom of the table to reset the 'Accum' column's start point; 'Accum' values saved across page refresh.</div>
+<div id="halp">Counts refreshed every 5 seconds by default; interval can be changed by using dropdown above. 'Next' column shows gap to next rank up. 'Change' column shows change since last refresh. 'Accum' column shows total change since page load. Press 'Reset' at the bottom of the table to reset the 'Accum' column's start point.</div>
 <hr>
-<div id="appinfo">Author: <a target="_blank" href="http://stackoverflow.com/users/616460">Jason C</a> | Version: <span id="version-number"></span> | <a href="javascript:toggleDebug();">Show Debug Info</a> | <a target="_blank" href="http://meta.stackoverflow.com/questions/290346">Vote Monitor Meta Page</a></div>
+<div id="appinfo">Author: <a  href="http://stackoverflow.com/users/616460">Jason C</a> | Version: <span id="version-number"></span> | <a href="javascript:toggleDebug();">Show Debug Info</a> | <a  href="http://meta.stackoverflow.com/questions/290346">Vote Monitor Meta Page</a></div>
 </body>
 </html>

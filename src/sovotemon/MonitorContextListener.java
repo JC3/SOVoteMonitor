@@ -61,6 +61,7 @@ public class MonitorContextListener implements ServletContextListener {
                 if (key.ownText().toLowerCase().contains("election begins")) {
                     Element value = key.nextElementSibling();
                     if (value.hasClass("label-value")) {
+                        // can't use 'X' format field because my web server still runs java 6... >.> 
                         primaryEndDate = new SimpleDateFormat("yyyy-MM-dd HH:mm:ssZ").parse(value.attr("title").replace("Z", "-0000"));
                         System.out.println("Primaries end: " + primaryEndDate);
                     }
@@ -144,10 +145,14 @@ public class MonitorContextListener implements ServletContextListener {
                     
                     String postId = tr.id();
                     int votes = Integer.parseInt(vp.ownText());
+
+                    boolean withdrawn = !tr.getElementsByClass("withdraw-date").isEmpty();
                     
                     CandidateInfo ci = candidatesByPost.get(postId);
-                    if (ci != null)
+                    if (ci != null) {
                         ci.voteCountPending = votes;
+                        ci.activePending = !withdrawn;
+                    }
         
                 } catch (Exception x) {
                     
@@ -169,12 +174,8 @@ public class MonitorContextListener implements ServletContextListener {
         try {
             candidatesLock.writeLock().lock();
             boolean changed = false;
-            for (CandidateInfo ci : candidatesSorted) {
-                if (ci.voteCount != ci.voteCountPending) {
-                    changed = true;
-                    ci.voteCount = ci.voteCountPending;
-                }
-            }
+            for (CandidateInfo ci : candidatesSorted)
+                changed = ci.commitPending() || changed;
             if (changed)
                 ++ updateSerial;
         } finally {
@@ -186,15 +187,17 @@ public class MonitorContextListener implements ServletContextListener {
 
     public static class Votes {
         final int[] votes;
+        final boolean[] active;
         final long serial;
-        Votes (int[] votes, long serial) { this.votes = votes; this.serial = serial; }
+        Votes (int[] v, boolean[] a, long s) { this.votes = v; this.active = a; this.serial = s; }
     }
     
     
     /**
-     * Get last updated vote counts.
+     * Get last updated statistics.
      * @param updateSerial Serial number to facilitate 304 responses. Pass -1 to guarantee non-null return.
-     * @return Array, index corresponds to index in candidatesSorted, or null if currentSerial same as updateSerial.
+     * @return Statistics. Array indices correspond to index in candidatesSorted. Returns null if currentSerial 
+     *         same as updateSerial.
      */
     public Votes getVotes (int currentSerial) {
 
@@ -202,11 +205,14 @@ public class MonitorContextListener implements ServletContextListener {
         
         try {
             candidatesLock.readLock().lock();
-            if (currentSerial != updateSerial) {
+            if (currentSerial != updateSerial || true) {
                 int[] values = new int[candidatesSorted.size()];
-                for (int n = 0; n < candidatesSorted.size(); ++ n)
+                boolean[] active = new boolean[candidatesSorted.size()];
+                for (int n = 0; n < candidatesSorted.size(); ++ n) {
                     values[n] = candidatesSorted.get(n).voteCount;
-                votes = new Votes(values, updateSerial);
+                    active[n] = candidatesSorted.get(n).active;
+                }
+                votes = new Votes(values, active, updateSerial);
             }
         } finally {
             candidatesLock.readLock().unlock();
@@ -239,7 +245,7 @@ public class MonitorContextListener implements ServletContextListener {
 
     @Override public void contextInitialized (ServletContextEvent event) {
         
-        System.out.println("Context initializing...");
+        System.out.println("Vote monitor initializing...");
         
         try {
             queryElectionInfo();

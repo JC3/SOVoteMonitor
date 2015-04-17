@@ -19,7 +19,7 @@ import javax.servlet.http.HttpServletResponse;
 public class VoteMonitorServlet extends HttpServlet {
 	private static final long serialVersionUID = 1L;
 
-	private static final int VERSION = 11; // if incremented, existing users will see a popup telling them to refresh.
+	private static final int VERSION = 13; // if incremented, existing users will see a popup telling them to refresh.
 	
 	
 	private MonitorContextListener monitor;
@@ -61,8 +61,13 @@ public class VoteMonitorServlet extends HttpServlet {
 	            try { clientSerial = Integer.parseInt(sstr); } catch (NumberFormatException x) { /* ignore */ }
 	        MonitorContextListener.Votes votes = monitor.getVotes(clientSerial);
 	        if (votes != null) {
+	            StringBuilder jsons = new StringBuilder("{");
 	            // note Arrays.toString() encloses in []'s.
-	            json = String.format("{\"v\":%s,\"r\":%d,\"s\":%d}", Arrays.toString(votes.votes).replace(" ", ""), VERSION, votes.serial);
+	            jsons.append(String.format("\"v\":%s,", Arrays.toString(votes.votes).replace(" ", "")));
+	            jsons.append(String.format("\"w\":%s,", Arrays.toString(getInactiveIndices(votes.active)).replace(" ", "")));
+	            jsons.append(String.format("\"r\":%d,", VERSION));
+	            jsons.append(String.format("\"s\":%d}", votes.serial));
+	            json = jsons.toString();
 	        }
 	    }
 
@@ -75,6 +80,15 @@ public class VoteMonitorServlet extends HttpServlet {
         
 	}
 
+	
+	private static int[] getInactiveIndices (boolean[] active) {
+	    int indices[] = new int[active.length], n = 0;
+	    for (int j = 0; j < active.length; ++ j)
+	        if (!active[j])
+	            indices[n ++] = j;
+	    return Arrays.copyOf(indices, n);
+	}
+	
 
 	@Override protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 	    

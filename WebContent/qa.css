@@ -1,0 +1,54 @@
+body { font-family: Arial, Helvetica, sans-serif; font-size: 15px; line-height: 19.5px; color: #222; }
+a { color: #be1e2d; text-decoration:none; }
+a:hover { color: #e64958; }
+a:visited { color: #be1e2d; }
+a:visited:hover { color: #e64958; }
+
+blockquote { margin-left: 40px; }
+
+.nav { 
+	text-align: center; 
+	background: #eee; 
+	padding: 1ex;
+	color: #bbb; /* this ends up being the color of the | dividers between links */
+	border: 1px solid #999; 
+	margin-bottom: 1ex; 
+}
+
+.nav-left { float: left; }
+.nav-right { float: right; }
+.nav-center { margin: 0 auto; }
+
+.nav-current { color: #000; }
+
+.question { 
+	background: #def; 
+	border: 1px solid #bbb; 
+	padding: 1ex; 
+}
+	
+.question-title { }
+
+.question-text { }
+
+.question .question-text { }
+
+.response .question-text { color: #888; font-style: italic; }
+
+.response { border-top: 1px solid #bbb; }
+
+.first { border-top: 0; }
+
+.response-name { margin-bottom: 0.5ex; display: inline-block; }
+
+.response-nav { display: inline-block; }
+
+.response-time { font-size: smaller; color: #aaa; }
+
+.response-text { }
+
+.response-empty { color: #888; font-style: italic; } 
+
+.response-missing { color: #d22; font-style: italic; }
+
+#appinfo { color: #909090; text-align: center; margin-top: 0.5ex; font-size: 13px; }
