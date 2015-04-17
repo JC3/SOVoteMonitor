@@ -205,7 +205,7 @@ public class MonitorContextListener implements ServletContextListener {
         
         try {
             candidatesLock.readLock().lock();
-            if (currentSerial != updateSerial || true) {
+            if (currentSerial != updateSerial) {
                 int[] values = new int[candidatesSorted.size()];
                 boolean[] active = new boolean[candidatesSorted.size()];
                 for (int n = 0; n < candidatesSorted.size(); ++ n) {
