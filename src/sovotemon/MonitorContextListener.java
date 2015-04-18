@@ -43,9 +43,12 @@ public class MonitorContextListener implements ServletContextListener {
     private Date primaryEndDate;
     private volatile int updateSerial = 1; // start at 1; clients use 0 for initial value
     
-    // lock is for CandidateInfo#voteCount and updateSerial access
+    // lock is for CandidateInfo#voteCount, #active and updateSerial access
     private final ReadWriteLock candidatesLock = new ReentrantReadWriteLock();
 
+    // accessed by update thread only
+    private boolean updatesSuspended = false; // suspended after first update if elections over
+    
     
     /**
      * Query elections page for candidate and election info and initialize collections.
@@ -58,7 +61,7 @@ public class MonitorContextListener implements ServletContextListener {
         // election end date
         try {
             for (Element key : doc.getElementsByClass("label-key")) {           
-                if (key.ownText().toLowerCase().contains("election begins")) {
+                if (key.ownText().toLowerCase().contains("election begins") || key.ownText().toLowerCase().contains("election began")) {
                     Element value = key.nextElementSibling();
                     if (value.hasClass("label-value")) {
                         // can't use 'X' format field because my web server still runs java 6... >.> 
@@ -129,59 +132,76 @@ public class MonitorContextListener implements ServletContextListener {
      */
     private void updateVotes () {
         
-        try {
+        if (!updatesSuspended) {
+        
+            try {
+        
+                URL url = new URL(ELECTIONS_PAGE);
+     
+                // only voteCountPending set here so we don't have to hold the lock while parsing
+                for (Element tr : Jsoup.parse(url, 10000).getElementsByTag("tr")) {
+        
+                    try {
+                                        
+                        if (!tr.id().startsWith("post-"))
+                            continue;
+            
+                        Element vp = tr.getElementsByClass("vote-count-post").first();
+                        
+                        String postId = tr.id();
+                        int votes = Integer.parseInt(vp.ownText());
     
-            URL url = new URL(ELECTIONS_PAGE);
- 
-            // only voteCountPending set here so we don't have to hold the lock while parsing
-            for (Element tr : Jsoup.parse(url, 10000).getElementsByTag("tr")) {
-    
-                try {
-                                    
-                    if (!tr.id().startsWith("post-"))
+                        boolean withdrawn = !tr.getElementsByClass("withdraw-date").isEmpty();
+                        
+                        CandidateInfo ci = candidatesByPost.get(postId);
+                        if (ci != null) {
+                            ci.voteCountPending = votes;
+                            ci.activePending = !withdrawn;
+                        }
+            
+                    } catch (Exception x) {
+                        
+                        System.err.println("warning: " + x.getClass() + ": " + x.getMessage());
                         continue;
-        
-                    Element vp = tr.getElementsByClass("vote-count-post").first();
-                    
-                    String postId = tr.id();
-                    int votes = Integer.parseInt(vp.ownText());
-
-                    boolean withdrawn = !tr.getElementsByClass("withdraw-date").isEmpty();
-                    
-                    CandidateInfo ci = candidatesByPost.get(postId);
-                    if (ci != null) {
-                        ci.voteCountPending = votes;
-                        ci.activePending = !withdrawn;
+                        
                     }
-        
-                } catch (Exception x) {
-                    
-                    System.err.println("warning: " + x.getClass() + ": " + x.getMessage());
-                    continue;
                     
                 }
                 
+            } catch (Exception x) {
+    
+                x.printStackTrace();
+                System.err.println("update failed: " + x.getClass() + ": " + x.getMessage());
+    
+            }
+    
+            // now copy to voteCount while locked
+            try {
+                candidatesLock.writeLock().lock();
+                boolean changed = false;
+                for (CandidateInfo ci : candidatesSorted)
+                    changed = ci.commitPending() || changed;
+                if (changed)
+                    ++ updateSerial;
+            } finally {
+                candidatesLock.writeLock().unlock();
             }
             
-        } catch (Exception x) {
+        } // !updatesSuspended
 
-            x.printStackTrace();
-            System.err.println("update failed: " + x.getClass() + ": " + x.getMessage());
+        //System.out.println(updatesSuspended + " " + primaryEndDate);
+        
+        // and somewhat kludgily stop updating after primaries end (cleaner logic would be to update once
+        // on context init and just never update again after primaries end; but this is ok for now).
+        updatesSuspended = (primaryEndDate != null && new Date().after(addPadding(primaryEndDate, 60)));
 
-        }
-
-        // now copy to voteCount while locked
-        try {
-            candidatesLock.writeLock().lock();
-            boolean changed = false;
-            for (CandidateInfo ci : candidatesSorted)
-                changed = ci.commitPending() || changed;
-            if (changed)
-                ++ updateSerial;
-        } finally {
-            candidatesLock.writeLock().unlock();
-        }
-
+    }
+    
+    
+    private static Date addPadding (Date d, int seconds) {
+        
+        return new Date(d.getTime() + seconds * 1000);
+        
     }
     
 
