@@ -11,120 +11,157 @@ import java.util.List;
  * such, because I don't care. Suck it, Java nerds.
  */
 public class QA {
-
     
-    public final List<Question> questions;
+    public final List<Topic> topics;
     public final List<Response> responses;
+     
     
-    
-    QA (List<Question> q, List<Response> r) {
-        questions = q;
+    QA (List<Topic> t, List<Response> r) {
+        topics = t;
         responses = r;
     }
     
     
     /**
-     * @param number Question number, starts at 1.
-     * @return The Question, or null if no question with the number exists.
+     * Things are getting weird.
+     * @return Empty string if ID not found; never returns null.
      */
-    public Question getQuestion (int number) {
-        for (Question q : questions)
-            if (q.number == number)
-                return q;
+    public String advanceId (String id, int by) {
+        int index = -1;
+        for (index = 0; index < topics.size(); ++ index)
+            if (topics.get(index).id.equalsIgnoreCase(id.trim()))
+                break;
+        if (index == topics.size())
+            return "";
+        else
+            return topics.get((((index + by) % topics.size()) + topics.size()) % topics.size()).id;
+    }
+    
+    
+    /**
+     * @param id Topic ID (questions are "1" thru whatever, also intro, nomination, etc.)
+     * @return The Topic, or null if no question with the number exists.
+     */
+    public Topic getTopic (String id) {
+        for (Topic t : topics)
+            if (t.id.equalsIgnoreCase(id.trim()))
+                return t;
+        return null;
+    }
+    
+    
+    /**
+     * @param userId User ID.
+     * @return Response for this user, null if not found.
+     */
+    public Response getResponse (int userId) {
+        for (Response r : responses)
+            if (r.userId == userId)
+                return r;
         return null;
     }
 
     
     /**
-     * A single question in the questionnaire. Has a number (1-based), the original html for 
-     * rendering, and the original raw text for matching.
+     * A single topic; this can be either a question in the questionnaire (in which case the ID
+     * is the question #) or some other source of information (like an intro or nomination post).
+     * If applicable, contains the original html for rendering, and the original raw text for
+     * matching.
      */
-    public static class Question {
+    public static class Topic {
+        
+        public static final String INTRODUCTION_ID = "i";
+        public static final String NOMINATION_ID = "n";
+        
+        public static Topic createIntroductionTopic () {
+            return new Topic(INTRODUCTION_ID, "Introductions", "Intros", null, null);
+        }
+        
+        public static Topic createNominationTopic () {
+            return new Topic(NOMINATION_ID, "Nomination Posts", "Nominations", null, null);
+        }
    
-        public final int number;
+        public final String id;
+        public final String title;
+        public final String shortTitle;
         public final String text;
         public final String html;
         
-        Question (int n, String t, String h) { 
-            number = n; 
-            html = h; 
-            text = t; 
+        Topic (String id, String title, String shortTitle, String text, String html) {
+            this.id = id.trim();
+            this.title = title;
+            this.shortTitle = shortTitle;
+            this.text = text;
+            this.html = html;
         }
     
     }    
     
     
     /**
-     * A single user's answer to a question. Has an associated question number (0 for intro)
-     * and the original html for rendering.
+     * A single user's answer to a topic. Has an associated topic ID and the original html for
+     * rendering.
      */
     public static class Answer {
     
-        public final int number; // 0 = intro
+        public final String topicId;
         public final String html;
+        public final URL answerUrl;
+        public final String answerTime;
+        public URL revisionUrl;
+        public String revisionTime;
         
-        Answer (int n, String h) { 
-            number = n; 
-            html = h; 
+        Answer (String topicId, String html, URL answerUrl, String answerTime) {
+            this.topicId = topicId;
+            this.html = html;
+            this.answerUrl = answerUrl;
+            this.answerTime = answerTime;
+        }
+        
+        void setEdited (URL revisionUrl, String editText) {
+            this.revisionUrl = revisionUrl;
+            this.revisionTime = editText;
         }
         
     }
  
     
     /**
-     * A single user's response to the questionnaire. Contains some user and post info and a
-     * list of answers to the questions.
+     * A single user's response to the questionnaire (and other topics). Contains some user and
+     * post info and a list of answers to the topics.
      */
     public static class Response implements Comparable<Response> {
     
         public final int userId;
-        public final URL answerUrl;
         public final String displayName;
-        public final String timeText;
-        public URL revisionUrl;
-        public String editText;
         public final List<Answer> answers = new ArrayList<Answer>();
         public final boolean missing;
         
-        Response (int u, URL url, String d, String t) { 
-            userId = u; 
-            answerUrl = url; 
-            displayName = d; 
-            timeText = t;
-            missing = false; 
+        Response (int userId, String displayName, boolean missing) { 
+            this.userId = userId;
+            this.displayName = displayName;
+            this.missing = missing;
         }
-        
-        Response (String d) {
-            userId = 0;
-            answerUrl = null; 
-            displayName = d;
-            timeText = null;
-            missing = true;
-        }
-        
-        void setEdited (URL revisionUrl, String editText) {
-            this.revisionUrl = revisionUrl;
-            this.editText = editText;
-        }
-        
-        public Answer getAnswer (int number) {
+                
+        public Answer getAnswer (String topicId) {
             for (Answer a : answers)
-                if (a.number == number)
+                if (a.topicId.equalsIgnoreCase(topicId.trim()))
                     return a;
             return null;
         }
         
-        public void addAnswer (Answer a) {
-            if (getAnswer(a.number) != null)
-                System.out.println("Duplicate answer " + a.number + " for user " + displayName);
+        public Answer addAnswer (Answer a) {
+            if (getAnswer(a.topicId) != null)
+                System.out.println("Duplicate answer " + a.topicId + " for user " + displayName);
             else
                 answers.add(a);
+            return a;
         }
         
-        void debugHasAllAnswers (List<Question> questions) {
-            for (Question q : questions)
-                if (getAnswer(q.number) == null)
-                    System.out.println("Missing answer for " + q.number + " for user " + displayName);
+        void debugHasAllAnswers (List<Topic> topics) {
+            for (Topic t : topics)
+                if (getAnswer(t.id) == null)
+                    System.out.println("Missing answer for " + t.id + " for user " + displayName);
         }
     
         /**

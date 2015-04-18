@@ -15,6 +15,7 @@ public class TextMatcher {
     
     
     private static float getScore (String a, String b) {
+        if (a == null || b == null) return 0.0f;
         Set<String> i = getWords(a);
         if (i.isEmpty()) return 0.0f;
         float osize = i.size();

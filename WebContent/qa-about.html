@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>About SO 2015 Candidate Questionnaire Viewer</title>
+<link rel="stylesheet" type="text/css" href="qa.css"/>
+<style type="text/css">
+#about div { margin: 2ex; }
+.nav { color: black; }
+.list-title { font-weight: bold; text-decoration: underline; }
+.disclaimer { color: red; }
+</style>
+</head>
+<body>
+<div class="nav">
+  <div class="nav-left"><a href="qa.jsp">&larr; Return to viewer.</a></div>
+  <!-- hack to force center to actually be in center... i don't understand css -->
+  <div class="nav-right" style="opacity:0">&larr; Return to viewer.</div> 
+  <div class="nav-center">About QA Viewer</div>
+</div>
+<div id="about">
+	<div>This tool allows you to view the <a href="http://meta.stackoverflow.com/questions/290096">candidate questionnaire responses</a>
+	organized by question instead of by user. It works by looking for the questions in the QA post, then parsing each user's response
+	by matching text in blockquotes with the question text. The back-end polls the response every 60 seconds, you view the cached
+	content; edits and changes to the posts will be updated here within 60 seconds.</div>
+	<div>The styling is pretty ugly, and I'm not really a web developer. Alternate stylings or layout tips/suggestions are more than welcome.</div>
+	<div>If you spot any issues or have any suggestions, please post an issue on the <a href="https://github.com/JC3/SOVoteMonitor/issues">GitHub issue page</a>.</div>
+    <div class="disclaimer">Please do not share outside of SO posts (Twitter, etc.), thanks!</div>
+	<div><span class="list-title">Useful Election Links</span>
+	<ul>
+        <li><a href="http://meta.stackexchange.com/questions/135360">There's an election going on. What's happening and how does it work?</a>
+	    <li><a href="http://meta.stackoverflow.com/questions/290096">Candidate Questionnaire Responses</a>
+	    <li><a href="http://stackoverflow.com/election/6?tab=nomination&all=true">Candidate Nomination Discussions</a> (scroll down for comments)
+	    <li><a href="http://elections.stackexchange.com/#stackoverflow">Candidate Data Summary</a>
+	    <li><a href="http://meta.stackoverflow.com/questions/289995">Candidate Activity Profiles</a>
+	    <li><a href="http://stackoverflow.com/election/6">Election Page</a> (vote here)
+	    <li><a href="http://chat.stackoverflow.com/rooms/74583">Stack Overflow 2015 Moderator Election Chat</a>
+	    <li><a href="http://www.infinitecat.com/infinite/cat-html/1-100/1.html">Picture of Cats</a>
+	</ul>        
+	</div>
+	<div><span class="list-title">Change Log</span>
+	<ul>
+	<li>Version 4
+	  <ul>
+	  <!-- <li>Removed "Next" and "Prev" response links again, seems counter to purpose of this tool. To browse a single candidate's entire response just visit their answer directly. -->
+	  <li>Nomination posts.
+	  <li>Added this about page.
+	  <li>Different style on per-response "next" and "prev" links.
+	  <li>Significant back-end changes to support nomination posts, and prepare to support displaying comments.
+	  </ul>
+	<li>Version 3
+	  <ul>
+	  <li>Added last edit date (if response edited) and link to revision history.
+	  <li>Added "Next" and "Prev" links to each response to navigate through responses for that user.
+	  <li>Removed "Show/Hide Missing Responses" toggle, it wasn't all that useful.
+	  <li>Some back-end refactoring and reorganization.
+	  </ul>
+	<li>Version 2
+	  <ul>
+	  <li>Sticky header, question text copies removed from individual responses.
+	  <li>Added "Show/Hide Missing Responses" toggle.
+	  </ul>
+	<li>Version 1
+	  <ul>
+	  <li>Initial version.
+	  </ul>
+	</ul>
+	</div>
+	<div>You can usually find <a target="_blank" href="http://stackoverflow.com/users/616460">me</a> hanging out in the <a href="http://chat.meta.stackexchange.com/rooms/89">MSE Tavern</a>, feel free to ping me.</div>
+</div>
+</body>
+</html>

@@ -22,9 +22,10 @@ import javax.servlet.annotation.WebListener;
 public class QAContextListener implements ServletContextListener {
 
     
-    public static final int VERSION = 3;
+    public static final int VERSION = 4;
     
     private static final String QA_PAGE = "http://meta.stackoverflow.com/questions/290096";
+    private static final String NOMINATIONS_PAGE = "http://stackoverflow.com/election/6?tab=nomination&all=true";
     
     private ScheduledExecutorService executor;    
    
@@ -61,6 +62,8 @@ public class QAContextListener implements ServletContextListener {
         // done with that
         
         QA qa = QAParser.parseQA(new URL(QA_PAGE), expected);
+        Thread.sleep(2000); // more spacing for page query to prevent throttling
+        NominationsParser.mergeIntoQA(qa, new URL(NOMINATIONS_PAGE));
         
         try {
             qaLock.writeLock().lock();

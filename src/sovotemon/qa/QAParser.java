@@ -75,26 +75,31 @@ public class QAParser {
         if (responseElements.isEmpty())
             throw new Exception("No answers found.");
         
-        List<QA.Question> questions = parseQuestions(questionElement);
-        for (QA.Question q : questions)
-            System.out.println("QA " + q.number + " => " + q.text);
-      
+        List<QA.Topic> topics = parseTopics(questionElement);
+        // add special topics
+        topics.add(0, QA.Topic.createIntroductionTopic());
+        topics.add(0, QA.Topic.createNominationTopic());
+        //
+        for (QA.Topic t : topics)
+            System.out.println("QA " + t.id + " => " + t.text);
+
+        
         System.out.println("Response element sets: " + responseElements.size());
         List<QA.Response> responses = new ArrayList<QA.Response>();
         for (ResponseElements info : responseElements)
-            responses.add(parseResponse(qaUrl, questions, info));
+            responses.add(parseResponse(qaUrl, topics, info));
 
         if (expectedResponses != null) {
             for (Map.Entry<Integer,String> expected : expectedResponses.entrySet())
                 if (!containsResponse(responses, expected.getKey())) {
-                    responses.add(new QA.Response(expected.getValue()));
+                    responses.add(new QA.Response(expected.getKey(), expected.getValue(), true));
                     System.out.println("RESPONSE " + expected.getKey() + " [" + expected.getValue() + "]: missing");
                 }
         }
 
         Collections.sort(responses);
 
-        return new QA(questions, responses);
+        return new QA(topics, responses);
         
     }
     
@@ -111,21 +116,22 @@ public class QAParser {
      * Parse a list of QA questions from the questionnaire post's question->post-text element.
      * For now, looks for an ol inside a blockquote and treats each li as a question.
      * @param e The post-text element from the questionnaire post.
-     * @return A list of Questions, or an empty list if none found.
+     * @return A list of Topics, or an empty list if none found.
      * @todo Expand to support possibly different formats on other sites (e.g. ul).
      */
-    private static List<QA.Question> parseQuestions (Element e) {
+    private static List<QA.Topic> parseTopics (Element e) {
         
         for (Element blockquote : e.getElementsByTag("blockquote")) {
             Element ol = blockquote.getElementsByTag("ol").first();
             if (ol != null) {
-                List<QA.Question> questions = new ArrayList<QA.Question>();
+                List<QA.Topic> topics = new ArrayList<QA.Topic>();
                 int number = 1;
                 for (Element li : ol.getElementsByTag("li")) {
-                    QA.Question q = new QA.Question(number ++, li.text(), li.html());
-                    questions.add(q);
+                    String nstr = Integer.toString(number ++);
+                    QA.Topic t = new QA.Topic(nstr, "Question " + nstr, "#" + nstr, li.text(), li.html());
+                    topics.add(t);
                 }
-                return questions;
+                return topics;
             }
         }
         
@@ -155,11 +161,11 @@ public class QAParser {
     /**
      * Parse an entire response from a set of page elements.
      * @param qaUrl QA URL for building links.
-     * @param questions List of questions, so we can match response quotes with questions.
+     * @param topics List of topics, so we can match response quotes with questions.
      * @param info Set of relevant page elements.
      * @return A response, or null if there was an error.
      */
-    private static QA.Response parseResponse (URL qaUrl, List<QA.Question> questions, ResponseElements info) {
+    private static QA.Response parseResponse (URL qaUrl, List<QA.Topic> topics, ResponseElements info) {
         
         // -------- user info
         
@@ -174,7 +180,7 @@ public class QAParser {
         
         // answer time and url
         
-        String timeText = (info.time == null ? "" : info.time.text().trim());
+        String answerTime = (info.time == null ? "" : info.time.text().trim());
         URL answerUrl = null;
         
         for (Element div = info.user.parent(); div != null && answerUrl == null; div = div.parent())
@@ -187,15 +193,15 @@ public class QAParser {
         // edit time and revision url
         
         Element revisionLink = (info.edit == null ? null : info.edit.getElementsByAttribute("href").first());
-        String editText = null;
-        URL revisionUrl = null;
+        String editTime = null;
+        URL editUrl = null;
         if (revisionLink != null) {
             try {
-                editText = (revisionLink == null ? null : revisionLink.text().trim());
-                revisionUrl = (revisionLink == null ? null : new URL(qaUrl, revisionLink.attr("href")));
+                editTime = (revisionLink == null ? null : revisionLink.text().trim());
+                editUrl = (revisionLink == null ? null : new URL(qaUrl, revisionLink.attr("href")));
             } catch (MalformedURLException x) {
-                editText = null;
-                revisionUrl = null;
+                editTime = null;
+                editUrl = null;
             }
         }
         
@@ -203,22 +209,22 @@ public class QAParser {
         
         QA.Response response;
         if (!displayName.isEmpty() && userId > 0) {
-            response = new QA.Response(userId, answerUrl, displayName, timeText);
-            response.setEdited(revisionUrl, editText);
+            response = new QA.Response(userId, displayName, false);
+            //response.setEdited(revisionUrl, editText);
         } else {
             return null;
         }
         
-        System.out.println("RESPONSE " + response.userId + " [" + response.displayName + "]: " + response.timeText + ", " + response.editText);
+        System.out.println("RESPONSE " + response.userId + " [" + response.displayName + "]: " + answerTime + ", " + editTime);
         
         // ------- answers
 
         List<String> qstrings = new ArrayList<String>();
-        for (QA.Question q : questions)
-            qstrings.add(q.text);
+        for (QA.Topic t : topics)
+            qstrings.add(t.text);
         
         StringBuilder currentBlock = new StringBuilder();
-        int number = 0;
+        String topicId = QA.Topic.INTRODUCTION_ID;
 
         for (Element element : info.answer.children()) {
              
@@ -230,10 +236,12 @@ public class QAParser {
                     //System.out.println(questions.get(match.index).number + " " + match.score);
                     //System.out.println("  Q => " + questions.get(match.index).text);
                     //System.out.println("  B => " + element.text());
-                    if (currentBlock.length() > 0)
-                        response.addAnswer(new QA.Answer(number, currentBlock.toString()));
+                    if (currentBlock.length() > 0) {
+                        QA.Answer a = response.addAnswer(new QA.Answer(topicId, currentBlock.toString(), answerUrl, answerTime));
+                        a.setEdited(editUrl, editTime);
+                    }
                     currentBlock = new StringBuilder();
-                    number = questions.get(match.index).number;
+                    topicId = topics.get(match.index).id;
                     consumed = true;
                 }
             }
@@ -252,10 +260,19 @@ public class QAParser {
             
         }
 
-        if (currentBlock.length() > 0)
-            response.addAnswer(new QA.Answer(number, currentBlock.toString()));
+        if (currentBlock.length() > 0) {
+            QA.Answer a = response.addAnswer(new QA.Answer(topicId, currentBlock.toString(), answerUrl, answerTime));
+            a.setEdited(editUrl, editTime);
+        }
+        
+        // if no intro add an empty one; little bit of a kludge to ultimately allow us to still display answer and edit
+        // links and times on the intro page.
+        if (response.getAnswer(QA.Topic.INTRODUCTION_ID) == null) {
+            QA.Answer a = response.addAnswer(new QA.Answer(QA.Topic.INTRODUCTION_ID, null, answerUrl, answerTime));
+            a.setEdited(editUrl, editTime);
+        }
 
-        response.debugHasAllAnswers(questions);
+        response.debugHasAllAnswers(topics);
         
         return response;
         

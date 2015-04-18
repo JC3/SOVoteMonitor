@@ -6,20 +6,23 @@ if (monitor == null)
     return;
 
 QA qa = monitor.getQA();
-if (qa.questions == null || qa.responses == null)
+if (qa == null) {
+    response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Server recently restarted and is now initializing. Please try again in a few seconds.");
+    return;
+}
+if (qa.topics == null || qa.responses == null)
     return;
 
-int number = 0;
-try {
-    number = Integer.parseInt(request.getParameter("q"));
-} catch (Exception x) {
-}
+String topicId = request.getParameter("q");
+topicId = (topicId == null ? "" : topicId.trim());
+if (topicId.isEmpty()) topicId = QA.Topic.INTRODUCTION_ID;
 
-int prevnumber = (number + qa.questions.size()) % (qa.questions.size() + 1);
-int nextnumber = (number + 1) % (qa.questions.size() + 1);
+String prevId = qa.advanceId(topicId, -1);
+String nextId = qa.advanceId(topicId, 1);
 
-String title = (number == 0 ? "Introductions" : ("Question #" + number));
-String qhtml = (qa.getQuestion(number) == null ? null : qa.getQuestion(number).html);
+QA.Topic topic = qa.getTopic(topicId);
+String title = (topic == null ? null : topic.title);
+String qhtml = (topic == null ? null : topic.html);
 %>
 <!DOCTYPE html>
 <html>
@@ -48,17 +51,18 @@ function fixHeader () {
 <body onload="fixHeader();">
 <div id="header">
 	<div class="nav">
-	    <div class="nav-left"><a href="?q=<%=prevnumber%>">&larr; Previous</a></div>
-	    <div class="nav-right"><a href="?q=<%=nextnumber%>">Next &rarr;</a></div>
+	    <div class="nav-left"><a href="?q=<%=prevId%>">&larr; Previous</a></div>
+	    <div class="nav-right"><a href="?q=<%=nextId%>">Next &rarr;</a></div>
 	    <div class="nav-center">
-			<% if (number == 0) { %><span class="nav-current">Intros</span><% } else { %><a href="?q=0">Intros</a><% } %>
 			<%
-			for (QA.Question q : qa.questions) { 
-			   if (number == q.number) { 
-			   %> | <span class="nav-current">#<%= q.number %></span><%
+            boolean first = true;
+			for (QA.Topic t : qa.topics) {
+			   if (t.id.equalsIgnoreCase(topicId)) { 
+			   %><%=first?"":" | "%><span class="nav-current"><%= t.shortTitle %></span><%
 			   } else {
-			   %> | <a href="?q=<%=q.number%>">#<%=q.number%></a><%
+			   %><%=first?"":" | "%><a href="?q=<%=t.id%>"><%=t.shortTitle%></a><%
 			   }
+			   first = false;
 			}
 			%>
 		</div>
@@ -74,39 +78,50 @@ function fixHeader () {
 <div id="fake-header"></div>
 <div id="page">
 	<%
-	boolean first = false; // not used right now
 	for (QA.Response r : qa.responses) {
-	    QA.Answer answer = r.getAnswer(number);
-	    String nonetext = (number == 0 ? "No introduction, that's OK!" : "No response provided.");
+	    QA.Answer answer = r.getAnswer(topicId);
+	    String nonetext = (topicId.equals(QA.Topic.INTRODUCTION_ID) ? "No introduction, that's OK!" : "No response provided.");
 	%>
 	<div class="response<%= first ? " first" : "" %><%= r.missing ? " missing" : ""%>">
 	    <a class="anchor" id="<%= r.userId %>"></a>
 	    <div class="response-header">
 		    <h2 class="response-name"><%= r.displayName %></h2>
-		    <!-- i'm disabling these again, they work but i think they distract from the purpose of this tool; just go read the user's answer. 
-		    <div class="response-nav">
+            <div class="response-nav">
+		    <!-- i'm disabling these again, they work but i think they distract from the purpose of this tool; just go read the user's answer. -->
+		    <!-- no i'm not, just kidding. -->
+		    <!-- psyyyyyche! -->
+		    <!-- no actually here they are -->
 		        <% if (!r.missing) { %>
-		        [<a href="?q=<%=prevnumber%>#<%=r.userId%>">prev</a>]
-		        [<a href="?q=<%=nextnumber%>#<%=r.userId%>">next</a>]
+		        [<a href="?q=<%=prevId%>#<%=r.userId%>">prev</a>]
+		        [<a href="?q=<%=nextId%>#<%=r.userId%>">next</a>]
 		        <% } %>
-		    </div>
-		    -->
+		    <!-- how about this instead, just for link sharing, since i already have the anchors... -->
+		    <!-- no actually how about not.
+		        [<a href="?q=<%=topicId%>#<%=r.userId%>">permalink</a>]
+		        -->
+            </div>
 		</div>
-	    <% if (r.missing) { %>
-	    <blockquote class="response-text"><span class="response-missing">This user has not responded to the questionnaire yet.</span></blockquote>
-	    <% } else { %>
-	    <div class="response-time">
-	       <a href="<%= r.answerUrl == null ? "" : r.answerUrl.toString() %>"><%= r.timeText == null ? "" : r.timeText %></a>
-	       <% if (r.revisionUrl != null) { %> (<a href="<%=r.revisionUrl%>"><%=r.editText%></a>)<% } %>
-	    </div>
-	    <blockquote class="response-text"><%= answer == null ? ("<span class=\"response-empty\">"+nonetext+"</span>") : answer.html %></blockquote>
-	    <% } %>
+		<% if (answer != null) { %>
+	        <div class="response-time">
+	           <% if (answer.answerUrl != null) { %><a href="<%=answer.answerUrl.toString()%>"><%=answer.answerTime%></a><% } %>
+	           <% if (answer.revisionUrl != null) { %> (<a href="<%=answer.revisionUrl.toString()%>"><%=answer.revisionTime%></a>)<% } %>
+	        </div>
+	        <% if (answer.html == null) { %>
+            <blockquote class="response-text"><span class="response-empty"><%=nonetext %></span></blockquote>
+	        <% } else { %>
+	        <blockquote class="response-text"><%= answer == null ? ("<span class=\"response-empty\">"+nonetext+"</span>") : answer.html %></blockquote>
+	        <% } %>
+		<% } else if (!r.missing) { %>
+            <blockquote class="response-text"><span class="response-empty"><%=nonetext %></span></blockquote>
+		<% } else { %>
+            <blockquote class="response-text"><span class="response-missing">This user has not responded to the questionnaire yet.</span></blockquote>
+		<% } %>
 	</div>
 	<% 
 	    first = false;
 	} 
 	%>
-    <div id="appinfo">Author: <a target="_blank" href="http://stackoverflow.com/users/616460">Jason C</a> | Version: <%= QAContextListener.VERSION %> | <a href="https://github.com/JC3/SOVoteMonitor/issues">Issues/Suggestions</a> | <a href="index.jsp">Live Vote Monitor!</a> | Please do not share outside of SO posts (Twitter, etc.), thanks!</div>
+    <div id="appinfo">Author: <a target="_blank" href="http://stackoverflow.com/users/616460">Jason C</a> | Version: <%= QAContextListener.VERSION %> | <a class="aboutlink" href="qa-about.html">About</a> | Please do not share outside of SO posts (Twitter, etc.), thanks!</div>
 </div>
 </body>
 </html>

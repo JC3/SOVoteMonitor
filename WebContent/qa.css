@@ -76,7 +76,11 @@ blockquote { margin-left: 40px; }
 
 .response-name { margin-bottom: 0.5ex; display: inline-block; }
 
-.response-nav { display: inline-block; }
+.response-nav { display: inline-block; color: #999; font-size: smaller; }
+.response-nav a { color: #999; text-decoration:none; }
+.response-nav a:hover { color: #999; }
+.response-nav a:visited { color: #999; }
+.response-nav a:visited:hover { color: #999; }
 
 .response-time { font-size: smaller; color: #aaa; }
 
@@ -87,3 +91,28 @@ blockquote { margin-left: 40px; }
 .response-missing { color: #d22; font-style: italic; }
 
 #appinfo { color: #909090; text-align: center; margin-top: 0.5ex; font-size: 13px; }
+
+.aboutlink {
+    font-weight: bold;
+}
+
+/* make tags from so posts look nicer */
+.post-tag{
+	padding:.1em .2em;
+	text-align:center;
+	line-height:1;
+	color:#3e6d8e;
+	background:#e4edf4;
+	margin:2px 2px 2px 0;
+	text-decoration:none;
+	font-size:90%;
+	white-space:nowrap;
+	display:inline-block;
+	border-radius:0;
+	border:1px solid #e4edf4
+}
+.post-tag:visited{color:#3e6d8e}
+.post-tag:hover{color:#3e6d8e;background-color:#dae6ef;border:1px solid #dae6ef}
+.post-tag:hover{text-decoration:none}
+.post-tag:visited{color:#566e76}
+.post-tag img{margin-bottom:0;display:none;}
