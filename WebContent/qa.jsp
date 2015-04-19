@@ -16,7 +16,7 @@ if (qa.topics == null || qa.responses == null)
 
 String topicId = request.getParameter("q");
 topicId = (topicId == null ? "" : topicId.trim());
-if (topicId.isEmpty()) topicId = QA.Topic.INTRODUCTION_ID;
+if (topicId.isEmpty()) topicId = "1"; // QA.Topic.INTRODUCTION_ID; // nobody has interesting intros
 
 String prevId = qa.advanceId(topicId, -1);
 String nextId = qa.advanceId(topicId, 1);
@@ -68,10 +68,13 @@ function areCommentsVisible (userId) {
 }
 function setCommentsVisible (userId, show) {
     if (show != areCommentsVisible(userId)) {
-        if (show)
+        if (show) {
             $("#commentbox-"+userId).animate({right:'0',opacity:'1'},300).addClass("commentbox-shown");
-        else
+            $("#commentlink-"+userId).text("hide comments")
+        } else {
             $("#commentbox-"+userId).animate({right:'-576px',opacity:'0'},300).removeClass("commentbox-shown");
+            $("#commentlink-"+userId).text("view comments")
+        }
     }
 }
 function showOrHideComments (userId) {
@@ -101,13 +104,13 @@ function showOrHideComments (userId) {
              %>
         </div>
     </div>
-    <div class="question">
-        <h1 class="question-title"><%= title %></h1>
+    <div class="question width-limit">
+        <h1 class="question-title"><%= title == null ? "<a href=\"http://www.catoftheday.com\">Hey, stappit.</a>" : title %></h1>
         <% if (qhtml != null) { %><blockquote class="question-text"><%= qhtml %></blockquote><% } %>
     </div>
 </div>
 <div id="fake-header"></div>
-<div id="page">
+<div id="page" class="width-limit">
     <%
     for (QA.Response r : qa.responses) {
         QA.Answer answer = r.getAnswer(topicId);
@@ -117,23 +120,23 @@ function showOrHideComments (userId) {
         <a class="anchor" id="<%= r.userId %>"></a>
         <div class="response-header">
             <h2 class="response-name"><%= r.displayName %></h2>
+            <% if (false) { /* just disabling all of this */ %>)
             <div class="response-nav">
                 <% if (answer != null) { %>
-                <% if (false) { /* temporarily disabling these */ %>
                 [<a href="?q=<%=prevId%>#<%=r.userId%>">prev</a>]
                 [<a href="?q=<%=nextId%>#<%=r.userId%>">next</a>]
-                <% } %>
-                &nbsp;[<a href="javascript:showOrHideComments(<%=r.userId%>);">comments</a>]
                 <% } %>
                 <% if (false) { /* temporarily disabling these */ %>
                 [<a href="?q=<%=topicId%>#<%=r.userId%>">permalink</a>]
                 <% } %>
             </div>
+            <% } %>
         </div>
         <% if (answer != null) { %>
             <div class="response-time">
                <% if (answer.answerUrl != null) { %><a href="<%=answer.answerUrl.toString()%>"><%=answer.answerTime%></a><% } %>
                <% if (answer.revisionUrl != null) { %> (<a href="<%=answer.revisionUrl.toString()%>"><%=answer.revisionTime%></a>)<% } %>
+               &mdash; <a class="commentlink" id="commentlink-<%=r.userId%>" href="javascript:showOrHideComments(<%=r.userId%>);">view comments</a>
             </div>
             <% if (answer.html == null) { %>
             <blockquote class="response-text"><span class="response-empty"><%=nonetext %></span></blockquote>
