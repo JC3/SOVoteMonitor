@@ -63,9 +63,10 @@ public class QAParser {
                     Element user = poster.getElementsByClass("user-details").first();
                     Element time = poster.getElementsByClass("user-action-time").first();
                     // comments
-                    Element comments = answerDiv.getElementsByClass("comments").first();
-                    for (Element e : comments.getElementsByAttribute("href")) // convert relative links
-                        e.attr("href", new URL(url, e.attr("href")).toString());
+                    Element comments = ScrapeUtils.queryCommentsIfNeeded(url, answerDiv.getElementsByClass("comments").first(), Integer.parseInt(answerDiv.attr("data-answerid")));
+                    if (comments != null)
+                        for (Element e : comments.getElementsByAttribute("href")) // convert relative links, todo: get rid of this
+                            e.attr("href", new URL(url, e.attr("href")).toString());
                     // might be good now
                     if (answer != null && user != null) // let time be null, silly parse error to fail completely on
                         responseElements.add(new ResponseElements(answer, user, time, edit, comments));
@@ -243,7 +244,7 @@ public class QAParser {
                     if (currentBlock.length() > 0) {
                         QA.Answer a = response.addAnswer(new QA.Answer(topicId, currentBlock.toString(), answerUrl, answerTime, "Questionnaire"));
                         a.setEdited(editUrl, editTime);
-                        a.setComments(info.comments.html());
+                        a.setComments(info.comments == null ? null : info.comments.outerHtml());
                     }
                     currentBlock = new StringBuilder();
                     topicId = topics.get(match.index).id;
@@ -268,7 +269,7 @@ public class QAParser {
         if (currentBlock.length() > 0) {
             QA.Answer a = response.addAnswer(new QA.Answer(topicId, currentBlock.toString(), answerUrl, answerTime, "Questionnaire"));
             a.setEdited(editUrl, editTime);
-            a.setComments(info.comments.html());
+            a.setComments(info.comments == null ? null : info.comments.outerHtml());
         }
         
         // if no intro add an empty one; little bit of a kludge to ultimately allow us to still display answer and edit
@@ -276,7 +277,7 @@ public class QAParser {
         if (response.getAnswer(QA.Topic.INTRODUCTION_ID) == null) {
             QA.Answer a = response.addAnswer(new QA.Answer(QA.Topic.INTRODUCTION_ID, null, answerUrl, answerTime, "Questionnaire"));
             a.setEdited(editUrl, editTime);
-            a.setComments(info.comments.html());
+            a.setComments(info.comments == null ? null : info.comments.outerHtml());
         }
 
         response.debugHasAllAnswers(topics);

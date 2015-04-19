@@ -7,7 +7,7 @@ if (monitor == null)
 
 QA qa = monitor.getQA();
 if (qa == null) {
-    response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Server recently restarted and is now initializing. Please try again in a few seconds.");
+    response.sendError(HttpServletResponse.SC_SERVICE_UNAVAILABLE, "Service recently restarted and is now initializing. Please try again in about 60 seconds.");
     return;
 }
 if (qa.topics == null || qa.responses == null)
@@ -68,7 +68,7 @@ function areCommentsVisible (userId) {
 function setCommentsVisible (userId, show) {
     if (show != areCommentsVisible(userId)) {
         if (show)
-            $("#commentbox-"+userId).animate({right:'25px',opacity:'1'},300).addClass("commentbox-shown");
+            $("#commentbox-"+userId).animate({right:'0',opacity:'1'},300).addClass("commentbox-shown");
         else
             $("#commentbox-"+userId).animate({right:'-576px',opacity:'0'},300).removeClass("commentbox-shown");
     }
@@ -97,7 +97,7 @@ function showOrHideComments (userId) {
                }
                first = false;
             }
-            %>
+             %>
         </div>
     </div>
     <div class="question">
@@ -122,8 +122,10 @@ function showOrHideComments (userId) {
             <!-- psyyyyyche! -->
             <!-- no actually here they are -->
                 <% if (answer != null) { %>
+                <!--  nope, gone
                 [<a href="?q=<%=prevId%>#<%=r.userId%>">prev</a>]
                 [<a href="?q=<%=nextId%>#<%=r.userId%>">next</a>]
+                -->
                 [<a href="javascript:showOrHideComments(<%=r.userId%>);">comments</a>]
                 <% } %>
             <!-- how about this instead, just for link sharing, since i already have the anchors... -->

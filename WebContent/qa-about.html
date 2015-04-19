@@ -40,13 +40,17 @@
 	</div>
 	<div><span class="list-title">Change Log</span>
 	<ul>
+	<li>Version 6
+	  <ul>
+	  <li>Actually load all the comments (previously, "more comment" weren't loaded). Need to query comments separately; still doing 60 second polls for now (updates now take 44 seconds, with rate limiting, worst case assuming fast SO response).
+      <li>Removed "Next" and "Prev" response links again, seems counter to purpose of this tool. To browse a single candidate's entire response just visit their answer directly.
+      </ul>
 	<li>Version 5
 	  <ul>
 	  <li>Comment viewer.
 	  </ul>
 	<li>Version 4
 	  <ul>
-	  <!-- <li>Removed "Next" and "Prev" response links again, seems counter to purpose of this tool. To browse a single candidate's entire response just visit their answer directly. -->
 	  <li>Nomination posts.
 	  <li>Added this about page.
 	  <li>Different style on per-response "next" and "prev" links.

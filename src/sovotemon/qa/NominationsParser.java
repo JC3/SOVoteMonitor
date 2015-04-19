@@ -38,6 +38,7 @@ public class NominationsParser {
                 
                 String postId = div.id();
                 URL postUrl = new URL(url, "#" + postId);
+                // todo: /a/ instead of anchors for post links
                 
                 Element time = info.getElementsByClass("user-action-time").first();
                 String postTime = (time == null ? "post link" : time.text()); // would be weird to be null, but put in something usable just in case
@@ -77,7 +78,17 @@ public class NominationsParser {
                 else
                     continue;
                 
+                QA.Response response = qa.getResponse(userId);
+                if (response == null)
+                    continue; // this person isn't in the election; don't bother continuing
+
                 Element comments = div.getElementsByClass("comments").first();
+                try {
+                    comments = ScrapeUtils.queryCommentsIfNeeded(url, comments, Integer.parseInt(postId.split("-")[1]));
+                } catch (Exception x) {
+                    System.err.println("when getting nomination comments: " + x.getClass().getSimpleName() + ": " + x.getMessage());
+                    comments = null;
+                }
                 
                 // hr's are annoying; also remove post-primary qa links that were edited in
                 for (Element e : post.children()) {
@@ -96,16 +107,14 @@ public class NominationsParser {
                 // convert relative links to absolute (lots of tag links)
                 for (Element e : post.getElementsByAttribute("href"))
                     e.attr("href", new URL(url, e.attr("href")).toString());
-                for (Element e : comments.getElementsByAttribute("href"))
-                    e.attr("href", new URL(url, e.attr("href")).toString());
+                if (comments != null)
+                    for (Element e : comments.getElementsByAttribute("href")) // todo: get rid of this, ScrapeUtils does it for the query already
+                        e.attr("href", new URL(url, e.attr("href")).toString());
                 
-                QA.Response response = qa.getResponse(userId);
-                if (response != null) {
-                    System.out.println("QA; nomination post found for " + userName + " " + userId);
-                    QA.Answer answer = response.addAnswer(new QA.Answer(QA.Topic.NOMINATION_ID, post.html(), postUrl, postTime, "Nomination"));
-                    answer.setEdited(revisionUrl, revisionUrl == null ? null : "revision history");
-                    answer.setComments(comments == null ? null : comments.html());
-                }
+                System.out.println("QA; nomination post found for " + userName + " " + userId);
+                QA.Answer answer = response.addAnswer(new QA.Answer(QA.Topic.NOMINATION_ID, post.html(), postUrl, postTime, "Nomination"));
+                answer.setEdited(revisionUrl, revisionUrl == null ? null : "revision history");
+                answer.setComments(comments == null ? null : comments.outerHtml());
     
             } catch (Exception x) {
                 
