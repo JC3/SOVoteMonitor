@@ -36,7 +36,7 @@ public class ScrapeUtils {
     }
 
     
-    public static Element queryCommentsIfNeeded (URL url, Element commentDiv, int postId) {
+    public static Element queryCommentsIfNeeded (URL url, Element commentDiv, int postId, boolean clean) {
     
         Element comments = null;
         
@@ -58,8 +58,49 @@ public class ScrapeUtils {
             }
         }
         
+        if (clean)
+            cleanSOComments(comments);
+        
         return comments;
         
     }
+
+    
+//    private static class Counter {
+//        int value;
+//    }
+    
+    
+    public static void cleanSOComments (Element comments) {
+        
+        // generate a report for debugging
+//        Map<String,Counter> attrCounts = new TreeMap<String,Counter>();
+//        for (Element e : comments.getAllElements()) {
+//            for (Attribute a : e.attributes()) {
+//                Counter c = attrCounts.get(a.getKey());
+//                if (c == null) {
+//                    c = new Counter();
+//                    attrCounts.put(a.getKey(), c);
+//                }
+//                c.value ++;
+//            }
+//        }
+//        System.out.println("=== comment attributes ===");
+//        for (Map.Entry<String,Counter> e : attrCounts.entrySet()) {
+//            System.out.println(e.getKey() + " => " + e.getValue().value);
+//        }     
+        
+        for (Element e : comments.getAllElements()) {
+            e.removeAttr("dir");
+            e.removeAttr("id");
+            e.removeAttr("rel");
+            e.removeAttr("title");
+            for (String data : e.attributes().dataset().keySet())
+                e.removeAttr(data);
+        }
+        
+        
+    }
+    
     
 }

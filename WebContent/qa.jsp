@@ -1,4 +1,5 @@
 <%@ page language="java" contentType="text/html; charset=utf-8" pageEncoding="utf-8" session="false"%>
+<%@ page trimDirectiveWhitespaces="true" %>
 <%@ page import="sovotemon.qa.*" %>
 <%
 QAContextListener monitor = (QAContextListener)getServletContext().getAttribute("qamonitor");
@@ -51,15 +52,15 @@ html, body {
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
 <script type="text/javascript">
 function fixPage () {
-    // header
+    /* header */
     var height = $("#header").outerHeight();
     $("#fake-header").height(height);
     var anchorOffset = $("#header").outerHeight();
-    // fix anchors for header
+    /* fix anchors for header */
     $(".anchor").css({'height':anchorOffset,'margin-top':-anchorOffset});
-    // adjust comment box top to not overlap nav bar
+    /* adjust comment box top to not overlap nav bar */
     $(".commentbox").css({'top':$("#navbar").outerHeight() + 25});
-    // get rid of cellspacing on comment tables because i'm too lazy to do it on the back-end
+    /* get rid of cellspacing on comment tables because i'm too lazy to do it on the back-end */
     $(".commentbox>table").each(function(){$(this).attr('cellspacing','0')});
 }
 function areCommentsVisible (userId) {
@@ -117,21 +118,16 @@ function showOrHideComments (userId) {
         <div class="response-header">
             <h2 class="response-name"><%= r.displayName %></h2>
             <div class="response-nav">
-            <!-- i'm disabling these again, they work but i think they distract from the purpose of this tool; just go read the user's answer. -->
-            <!-- no i'm not, just kidding. -->
-            <!-- psyyyyyche! -->
-            <!-- no actually here they are -->
                 <% if (answer != null) { %>
-                <!--  nope, gone
+                <% if (false) { /* temporarily disabling these */ %>
                 [<a href="?q=<%=prevId%>#<%=r.userId%>">prev</a>]
                 [<a href="?q=<%=nextId%>#<%=r.userId%>">next</a>]
-                -->
-                [<a href="javascript:showOrHideComments(<%=r.userId%>);">comments</a>]
                 <% } %>
-            <!-- how about this instead, just for link sharing, since i already have the anchors... -->
-            <!-- no actually how about not.
+                &nbsp;[<a href="javascript:showOrHideComments(<%=r.userId%>);">comments</a>]
+                <% } %>
+                <% if (false) { /* temporarily disabling these */ %>
                 [<a href="?q=<%=topicId%>#<%=r.userId%>">permalink</a>]
-                -->
+                <% } %>
             </div>
         </div>
         <% if (answer != null) { %>

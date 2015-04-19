@@ -63,7 +63,7 @@ public class QAParser {
                     Element user = poster.getElementsByClass("user-details").first();
                     Element time = poster.getElementsByClass("user-action-time").first();
                     // comments
-                    Element comments = ScrapeUtils.queryCommentsIfNeeded(url, answerDiv.getElementsByClass("comments").first(), Integer.parseInt(answerDiv.attr("data-answerid")));
+                    Element comments = ScrapeUtils.queryCommentsIfNeeded(url, answerDiv.getElementsByClass("comments").first(), Integer.parseInt(answerDiv.attr("data-answerid")), true);
                     if (comments != null)
                         for (Element e : comments.getElementsByAttribute("href")) // convert relative links, todo: get rid of this
                             e.attr("href", new URL(url, e.attr("href")).toString());

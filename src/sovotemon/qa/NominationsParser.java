@@ -84,7 +84,7 @@ public class NominationsParser {
 
                 Element comments = div.getElementsByClass("comments").first();
                 try {
-                    comments = ScrapeUtils.queryCommentsIfNeeded(url, comments, Integer.parseInt(postId.split("-")[1]));
+                    comments = ScrapeUtils.queryCommentsIfNeeded(url, comments, Integer.parseInt(postId.split("-")[1]), true);
                 } catch (Exception x) {
                     System.err.println("when getting nomination comments: " + x.getClass().getSimpleName() + ": " + x.getMessage());
                     comments = null;
