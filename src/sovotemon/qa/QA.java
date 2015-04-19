@@ -110,17 +110,24 @@ public class QA {
         public final String answerTime;
         public URL revisionUrl;
         public String revisionTime;
+        public String commentsHtml;
+        public final String sourceName;
         
-        Answer (String topicId, String html, URL answerUrl, String answerTime) {
+        Answer (String topicId, String html, URL answerUrl, String answerTime, String sourceName) {
             this.topicId = topicId;
             this.html = html;
             this.answerUrl = answerUrl;
             this.answerTime = answerTime;
+            this.sourceName = sourceName;
         }
         
         void setEdited (URL revisionUrl, String editText) {
             this.revisionUrl = revisionUrl;
             this.revisionTime = editText;
+        }
+        
+        void setComments (String html) {
+            this.commentsHtml = html;
         }
         
     }

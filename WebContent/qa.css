@@ -96,6 +96,20 @@ blockquote { margin-left: 40px; }
     font-weight: bold;
 }
 
+.commentbox-title {
+	border: 0;
+	margin: 0;
+	padding: 0;
+	padding-bottom: 1ex;
+	border-bottom: 1px solid #e0e0e0;
+	font-size: large;
+	color: #202020;
+}
+
+.commentbox-hide {
+	float: right;
+}
+
 /* make tags from so posts look nicer */
 .post-tag{
 	padding:.1em .2em;
@@ -116,3 +130,111 @@ blockquote { margin-left: 40px; }
 .post-tag:hover{text-decoration:none}
 .post-tag:visited{color:#566e76}
 .post-tag img{margin-bottom:0;display:none;}
+
+/* more stuff from so; comment vote count colors */
+.comment-score .cool {color: #999;}
+.comment-score .warm {color: #9b764f;}
+.comment-score .hot {color: #cf7721;}
+.comment-score .supernova {color: #fe7a15;}
+
+/* comment styles */
+a.comment-user {
+    padding:0;
+    white-space:nowrap;
+}
+
+a.comment-user.owner {
+    padding:1px 5px;
+}
+
+tr.comment>td {
+    border-bottom:1px solid #e0e0e0;
+    font-size:13px;
+    line-height:1.3;
+    padding:6px 6px 6px 0;
+    vertical-align:top;
+}
+
+.comment-text {
+    font-size:13px;
+    line-height:1.3;
+    padding:0 6px 0 7px;
+    vertical-align:text-top;
+}
+
+.comment-text code {
+    padding:1px 5px;
+    white-space:normal;
+}
+
+.comment-text .comment-edited {
+    margin-left:2px;
+    margin-top:3px;
+    vertical-align:top;
+}
+
+.comments {
+    -webkit-tap-highlight-color:rgba(255,255,255,0);
+    border-top:1px solid #d0d0d0;
+    font-size:13px;
+    line-height:135%;
+    margin-top:10px;
+    padding-bottom:10px;
+}
+
+.comments>table {
+}
+
+.comments-link {
+    padding:0 3px 2px;
+}
+
+.comments-add-link {
+    font-weight:700;
+}
+
+a.comments-link:hover {
+    padding:0 3px 2px;
+    text-decoration:none;
+}
+
+.comments-link-annotation {
+    color:#888;
+}
+
+.comment img {
+    vertical-align:middle;
+}
+
+.comment-flag,.comment-up,.comment-delete {
+    cursor:pointer;
+    visibility:hidden;
+}
+
+.comment:hover .comment-flag,.comment:hover .comment-up,.comment:hover .comment-delete,.comment:hover .comment-edit-hide,.comment:hover .comment-up-on {
+    visibility:visible;
+}
+
+.comment-actions {
+    padding-left:3px;
+    width:15px;
+}
+
+.comment-score span {
+    font-size:13px;
+    font-weight:400;
+    padding-right:4px;
+}
+
+.comment-date {
+    color:#999;
+}
+
+.comment-edit-hide {
+    visibility:hidden;
+}
+
+.comment-date,.comment-date>a {
+    border-bottom:none;
+    color:#999;
+}

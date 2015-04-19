@@ -77,6 +77,8 @@ public class NominationsParser {
                 else
                     continue;
                 
+                Element comments = div.getElementsByClass("comments").first();
+                
                 // hr's are annoying; also remove post-primary qa links that were edited in
                 for (Element e : post.children()) {
                     if ("hr".equals(e.tagName())) {
@@ -94,12 +96,15 @@ public class NominationsParser {
                 // convert relative links to absolute (lots of tag links)
                 for (Element e : post.getElementsByAttribute("href"))
                     e.attr("href", new URL(url, e.attr("href")).toString());
+                for (Element e : comments.getElementsByAttribute("href"))
+                    e.attr("href", new URL(url, e.attr("href")).toString());
                 
                 QA.Response response = qa.getResponse(userId);
                 if (response != null) {
                     System.out.println("QA; nomination post found for " + userName + " " + userId);
-                    QA.Answer answer = response.addAnswer(new QA.Answer(QA.Topic.NOMINATION_ID, post.html(), postUrl, postTime));
+                    QA.Answer answer = response.addAnswer(new QA.Answer(QA.Topic.NOMINATION_ID, post.html(), postUrl, postTime, "Nomination"));
                     answer.setEdited(revisionUrl, revisionUrl == null ? null : "revision history");
+                    answer.setComments(comments == null ? null : comments.html());
                 }
     
             } catch (Exception x) {

@@ -22,7 +22,7 @@ import javax.servlet.annotation.WebListener;
 public class QAContextListener implements ServletContextListener {
 
     
-    public static final int VERSION = 4;
+    public static final int VERSION = 5;
     
     private static final String QA_PAGE = "http://meta.stackoverflow.com/questions/290096";
     private static final String NOMINATIONS_PAGE = "http://stackoverflow.com/election/6?tab=nomination&all=true";
