@@ -1,4 +1,4 @@
-html,body{border:0;margin:0;padding:0}
+html,body{border:0;margin:0;padding:0;overflow-x:hidden}
 #header{position:fixed;width:100%}
 #page{padding-left:3ex;padding-right:3ex}
 .anchor{display:block;visibility:hidden}
@@ -14,7 +14,7 @@ blockquote{margin-left:40px}
 .nav-center{margin:0 auto}
 .nav-current{color:#000}
 .question{background:#def;border:1px solid #bbb;border-top:0;padding:1ex 3ex}
-/*.width-limit{width:800px;margin:0 auto}*/
+/*.width-limit{max-width:1000px;margin:0 auto}*/
 #hideshow{background:#FFF;border:1px solid #ccc;font-size:13px;padding:4px}
 .response .question-text{color:#888;font-style:italic}
 .response{border-bottom:1px solid #bbb}
@@ -24,12 +24,14 @@ blockquote{margin-left:40px}
 .response-nav a:hover{color:#999}
 .response-nav a:visited{color:#999}
 .response-nav a:visited:hover{color:#999}
+.response-text blockquote{margin-bottom:10px;background-color:#f0f0f0;padding:0 10px;border:1px solid #f0f0f0;border-left:2px solid #ccc}
 .response-time{color:#aaa;font-size:smaller}
 .response-empty{color:#888;font-style:italic}
 .response-missing{color:#d22;font-style:italic}
 #appinfo{color:#909090;font-size:13px;margin-top:.5ex;text-align:center}
 .aboutlink{font-weight:700}
 .commentlink{font-weight:700}
+.commentbox{background:#fafafa;overflow-y:scroll}
 .commentbox-title{border:0;border-bottom:1px solid #e0e0e0;color:#202020;font-size:large;margin:0;padding:0 0 1ex}
 .commentbox-hide{float:right}
 .post-tag{background:#e4edf4;border:1px solid #e4edf4;border-radius:0;color:#3e6d8e;display:inline-block;font-size:90%;line-height:1;margin:2px 2px 2px 0;padding:.1em .2em;text-align:center;text-decoration:none;white-space:nowrap}

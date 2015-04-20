@@ -33,20 +33,17 @@ String qhtml = (topic == null ? null : topic.html);
 <link rel="stylesheet" type="text/css" href="qa.css"/>
 <style type="text/css">
 /* http://stackoverflow.com/a/14393575/616460 */
-html, body {
-    overflow-x: hidden;
-}
-.commentbox {
-    background: #fafafa;
-    padding: 12px;
-    border: 1px solid #ccc;
-    width: 550px;
-    position: fixed;
+.commentbox{
+    border:1px solid #ccc;
+    border-bottom:0;
+    border-top:1px solid #999;
+    padding:12px;
+    position:fixed;
+    width:550px;
     /*top: 50px;*/
-    bottom: 25px;
-    right: -576px;
-    opacity: 0;
-    overflow-y: scroll;
+    bottom:0px;
+    right:-576px;
+    opacity:0;
 }
 </style>
 <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
@@ -59,7 +56,7 @@ function fixPage () {
     /* fix anchors for header */
     $(".anchor").css({'height':anchorOffset,'margin-top':-anchorOffset});
     /* adjust comment box top to not overlap nav bar */
-    $(".commentbox").css({'top':$("#navbar").outerHeight() + 25});
+    $(".commentbox").css({'top':$("#navbar").outerHeight() - 1});
     /* get rid of cellspacing on comment tables because i'm too lazy to do it on the back-end */
     $(".commentbox>table").each(function(){$(this).attr('cellspacing','0')});
 }
@@ -83,6 +80,18 @@ function showOrHideComments (userId) {
         setCommentsVisible(cbUserId, (userId == cbUserId) && !areCommentsVisible(cbUserId))
     }); 
 }
+/* http://stackoverflow.com/a/7385673/616460 */
+$(document).mouseup(function (e) {
+    var container = $(".commentbox-shown");
+    if (container.length != 0 &&
+        e.target.tagName !== 'A' && 
+        e.target.tagName !== 'HTML' && /* ignores scrollbar clicks for now: todo double check if page margins added */
+        !container.is(e.target) && 
+        container.has(e.target).length === 0) 
+    {
+    	setCommentsVisible(container.attr("data-userid"), false);
+    }
+});
 </script>
 </head>
 <body onload="fixPage();">
